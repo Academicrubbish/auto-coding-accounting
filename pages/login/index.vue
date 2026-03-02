@@ -49,6 +49,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useUserStore } from '@/store/user'
+import { setAuthCache } from '@/utils/auth-cache'
 
 const userStore = useUserStore()
 const isLoading = ref(false)
@@ -96,7 +97,6 @@ const handleLogin = async () => {
       userStore.setIsGuest(false)
 
       // 保存到本地缓存
-      const { setAuthCache } = require('@/utils/auth-cache')
       setAuthCache(openid, userData)
 
       // @ts-ignore
