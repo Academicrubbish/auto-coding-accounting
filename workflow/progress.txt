@@ -472,4 +472,88 @@
 - 使用 createBy 字段实现数据隔离（系统默认数据 vs 用户数据）
 - 游客模式支持浏览系统默认数据
 
+---
+
+## 2026-03-02 - Task: 权限验证中间件开发 (Task 29)
+
+### What was done:
+- ✅ 创建 uniCloud-aliyun/cloudfunctions/common/check-auth 公共模块
+  - checkLogin: 验证用户登录状态
+  - checkOwnership: 验证数据所有权
+  - checkSystemData: 验证系统数据保护
+  - checkPermission: 完整权限验证（登录+所有权+系统数据）
+  - checkAccountPermission: 账户权限验证
+  - checkCategoryPermission: 分类权限验证
+  - checkTransactionPermission: 交易权限验证
+  - checkAccountOwnership: 账户所有权验证（用于交易创建）
+  - checkCategoryAvailable: 分类可用性验证（用户或系统默认）
+  - validateParams: 必填参数验证
+  - validateTransactionType: 交易类型验证
+  - validateCategoryType: 分类类型验证
+  - validateAccountType: 账户类型验证
+  - validateAmount: 金额验证
+- ✅ 重构 account 云函数使用 check-auth 模块
+- ✅ 重构 category 云函数使用 check-auth 模块
+- ✅ 重构 transaction 云函数使用 check-auth 模块
+- ✅ 重构 statistics 云函数使用 check-auth 模块
+
+### Testing:
+- ✅ 公共模块已创建并验证语法正确
+- ✅ 所有云函数已重构使用公共模块
+- ⚠️ 需要在 HBuilderX 中上传云函数并测试
+
+### Notes:
+- 权限验证逻辑统一管理，减少代码重复
+- 错误消息格式统一，便于前端处理
+- 所有云函数的权限检查现在使用相同的验证逻辑
+
+---
+
+## 2026-03-02 - Task: 完整流程测试指南 (Task 30)
+
+### What was done:
+- ✅ 创建 workflow/testing-guide.md 完整测试指南
+  - 前置准备检查清单
+  - 登录流程测试（游客模式、微信授权登录）
+  - 账户管理测试（列表、创建、编辑、删除）
+  - 分类管理测试（列表、创建、编辑、删除）
+  - 记账功能测试（支出/收入记录、分类/账户选择）
+  - 交易列表测试（显示、筛选、分页加载）
+  - 交易详情测试（显示、编辑、删除）
+  - 统计分析测试（月度统计、分类占比）
+  - 首页功能测试（总资产、本月统计、快捷记账）
+  - 个人中心测试（用户信息、功能入口、退出登录）
+  - 边界条件测试（数据验证、网络异常、并发操作）
+  - 常见问题排查指南
+  - 测试报告模板
+
+### Testing:
+- ✅ 测试指南已创建，包含10大类测试场景
+- ✅ 共60+个测试用例
+- ⚠️ 需要按照指南在微信开发者工具中进行测试
+
+### Notes:
+- 测试指南覆盖所有功能模块
+- 包含预期结果说明
+- 提供问题排查指南
+
+---
+
+## 项目完成状态
+
+### 已完成任务:
+- ✅ Task 1-22: 项目基础配置、云开发环境、数据库Schema、工具函数、状态管理、云函数、页面开发
+- ✅ Task 24-28: 路由配置、样式主题、错误处理、数据缓存、响应式适配
+- ✅ Task 29: 权限验证中间件
+- ✅ Task 30: 完整流程测试指南
+
+### 待完成任务（需手动操作）:
+- ⚠️ Task 23: 默认数据初始化 - 需要在 uniCloud 控制台手动创建系统默认分类和账户（参考 default-data-guide.md）
+
+### 下一步操作:
+1. 在 HBuilderX 中上传云函数到阿里云
+2. 在 uniCloud 控制台配置环境变量（MP_APP_ID, MP_SECRET）
+3. 在 uniCloud 控制台上传数据库 Schema
+4. 在 uniCloud 数据库创建系统默认数据（参考 default-data-guide.md）
+5. 在微信开发者工具中测试所有功能（参考 testing-guide.md）
 

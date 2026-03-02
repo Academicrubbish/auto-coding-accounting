@@ -4,6 +4,8 @@ unpackage/
 .DS_Store
 # 忽略云函数（会直接部署到云端）
 uniCloud-aliyun/cloudfunctions/
+# 但保留公共模块
+!uniCloud-aliyun/cloudfunctions/common/
 # 保留数据库 Schema 文件
 !uniCloud-aliyun/database/
 uniCloud-aliyun/database/node_modules/
