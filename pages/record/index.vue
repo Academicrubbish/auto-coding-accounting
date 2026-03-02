@@ -182,6 +182,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useUserStore } from '../../store/user'
+
+const userStore = useUserStore()
 
 // 从页面参数获取类型
 const props = defineProps<{
@@ -279,7 +282,8 @@ const loadCategories = async () => {
       name: 'category',
       data: {
         action: 'list',
-        data: { type: recordType.value }
+        data: { type: recordType.value },
+        openid: userStore.openid
       }
     })
 
@@ -299,7 +303,10 @@ const loadAccounts = async () => {
     // @ts-ignore
     const res = await uniCloud.callFunction({
       name: 'account',
-      data: { action: 'list' }
+      data: {
+        action: 'list',
+        openid: userStore.openid
+      }
     })
 
     if (res.result.code === 0) {
@@ -401,7 +408,8 @@ const handleSubmit = async () => {
           amount: numAmount,
           remark: remark.value,
           transaction_date: transactionDate.value
-        }
+        },
+        openid: userStore.openid
       }
     })
 
