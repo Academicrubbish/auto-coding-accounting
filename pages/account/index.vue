@@ -49,6 +49,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useUserStore } from '../../store/user'
+
+const userStore = useUserStore()
 
 // 状态
 const accounts = ref<any[]>([])
@@ -93,7 +96,10 @@ const loadAccounts = async () => {
     // @ts-ignore
     const res = await uniCloud.callFunction({
       name: 'account',
-      data: { action: 'list' }
+      data: {
+        action: 'list',
+        openid: userStore.openid
+      }
     })
 
     if (res.result.code === 0) {
@@ -142,7 +148,8 @@ const handleDelete = (item: any) => {
             name: 'account',
             data: {
               action: 'delete',
-              data: { _id: item._id }
+              data: { _id: item._id },
+              openid: userStore.openid
             }
           })
 
