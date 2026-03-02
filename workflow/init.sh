@@ -1,106 +1,100 @@
 #!/bin/bash
 
-# 记账软件 - 项目初始化脚本
-# 此脚本将初始化 uni-app 项目并配置开发环境
+# 记账软件 - 项目初始化/升级脚本
+# 此脚本将升级现有的 uni-app 项目到 Vue 3 + UnoCSS + Pinia
 
 set -e  # 遇到错误时退出
 
-PROJECT_NAME="account-app"
-UNICLOUD_DIR="uniCloud-aliyun"
-
 echo "========================================"
-echo "  记账软件 - 项目初始化"
+echo "  记账软件 - 项目升级"
 echo "========================================"
 echo ""
 
-# 检查是否在正确的目录
+# 检查是否在正确的目录（workflow 目录）
 if [ ! -f "task.json" ]; then
-    echo "❌ 错误：请先 cd 到 accounting-workflow 目录"
+    echo "❌ 错误：请在 workflow 目录中运行此脚本"
     exit 1
 fi
 
-# 检查 uni-app 是否已存在
-if [ -d "$PROJECT_NAME" ]; then
-    echo "⚠️  项目目录 $PROJECT_NAME 已存在"
-    read -p "是否删除并重新创建？(y/N): " -n 1 -r
-    echo ""
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "🗑️  删除旧项目..."
-        rm -rf "$PROJECT_NAME"
-        rm -rf "$UNICLOUD_DIR"
+# 检查父目录是否是项目根目录
+if [ ! -f "../manifest.json" ]; then
+    echo "❌ 错误：未找到项目根目录（manifest.json）"
+    exit 1
+fi
+
+echo "📋 当前项目状态："
+echo "  - uni-app 项目: ✅ 已创建"
+echo "  - uniCloud 空间: ✅ 已关联"
+echo "  - 微信小程序 AppID: ✅ 已配置"
+echo "  - Vue 版本: ⚠️  需要升级到 Vue 3"
+echo "  - UnoCSS: ❌ 未安装"
+echo "  - Pinia: ❌ 未安装"
+echo ""
+
+# 询问是否继续
+read -p "是否开始升级？(Y/n): " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Nn]$ ]]; then
+    echo "❌ 取消升级"
+    exit 0
+fi
+
+echo ""
+echo "📦 开始升级项目..."
+echo ""
+
+# 切换到项目根目录
+cd ..
+
+# Step 1: 升级到 Vue 3
+echo "🔄 Step 1: 升级到 Vue 3..."
+if grep -q '"vueVersion" : "2"' manifest.json; then
+    echo "  修改 manifest.json，设置 vueVersion 为 3"
+    # macOS 和 Linux 的 sed 语法不同
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' 's/"vueVersion" : "2"/"vueVersion" : "3"/g' manifest.json
     else
-        echo "✅ 保留现有项目，跳过创建步骤"
-        cd "$PROJECT_NAME"
-        echo ""
-        echo "🚀 启动开发服务器..."
-        echo ""
-        echo "提示："
-        echo "  小程序开发：npm run dev:mp-weixin"
-        echo "  H5 开发：   npm run dev:h5"
-        echo ""
-        exit 0
+        sed -i 's/"vueVersion" : "2"/"vueVersion" : "3"/g' manifest.json
     fi
+    echo "  ✅ Vue 3 升级完成"
+elif grep -q '"vueVersion" : "3"' manifest.json; then
+    echo "  ✅ 已经是 Vue 3"
+else
+    echo "  ⚠️  未找到 vueVersion 配置"
 fi
-
-echo "📦 创建 uni-app 项目..."
 echo ""
 
-# 方式1：使用 HBuilderX 创建（推荐）
-echo "========================================"
-echo "  请使用 HBuilderX 创建项目"
-echo "========================================"
-echo ""
-echo "步骤："
-echo "  1. 打开 HBuilderX"
-echo "  2. 文件 → 新建 → 项目"
-echo "  3. 选择 uni-app 项目"
-echo "  4. 项目名称：$PROJECT_NAME"
-echo "  5. 模板：Vue 3 + TypeScript"
-echo "  6. 点击创建"
-echo ""
-read -p "创建完成后按回车继续..."
-
-# 检查项目是否创建成功
-if [ ! -d "$PROJECT_NAME" ]; then
-    echo "❌ 错误：未找到项目目录 $PROJECT_NAME"
-    echo "   请确认已使用 HBuilderX 创建项目"
-    exit 1
+# Step 2: 重命名 main.js 为 main.ts
+echo "🔄 Step 2: 重命名 main.js 为 main.ts..."
+if [ -f "main.js" ] && [ ! -f "main.ts" ]; then
+    mv main.js main.ts
+    echo "  ✅ main.js 已重命名为 main.ts"
+elif [ -f "main.ts" ]; then
+    echo "  ✅ main.ts 已存在"
+else
+    echo "  ⚠️  main.js 不存在"
 fi
-
-cd "$PROJECT_NAME"
-
-echo ""
-echo "📥 安装依赖..."
 echo ""
 
-# 安装基础依赖
-echo "安装 UnoCSS..."
-npm install -D unocss
+# Step 3: 安装依赖
+echo "🔄 Step 3: 安装依赖..."
+echo "  安装 UnoCSS..."
+npm install -D unocss @unocss/preset-uno
 
-echo "安装 Pinia..."
+echo "  安装 Pinia..."
 npm install pinia
 
-echo "安装 uCharts（图表库）..."
-npm install @qiun/ucharts-uarts uni-modules
-
-echo ""
-echo "✅ 依赖安装完成"
+echo "  ✅ 依赖安装完成"
 echo ""
 
-# 创建 uniCloud 目录
-echo "📁 创建 uniCloud 目录结构..."
-cd ..
-mkdir -p "$UNICLOUD_DIR/cloudfunctions"
-mkdir -p "$UNICLOUD_DIR/database"
-echo "✅ uniCloud 目录结构已创建"
+# Step 4: 创建目录结构
+echo "🔄 Step 4: 创建目录结构..."
+mkdir -p components store utils api
+echo "  ✅ 目录结构已创建（components/store/utils/api）"
 echo ""
 
-# 创建必要的配置文件
-echo "📝 创建配置文件..."
-
-cd "$PROJECT_NAME"
-
-# 创建 unocss.config.ts
+# Step 5: 配置 UnoCSS
+echo "🔄 Step 5: 配置 UnoCSS..."
 cat > unocss.config.ts << 'EOF'
 import { defineConfig } from 'unocss'
 import presetUno from '@unocss/preset-uno'
@@ -125,28 +119,12 @@ export default defineConfig({
   }
 })
 EOF
-
-# 创建 .env 模板
-cat > .env.example << 'EOF'
-# uniCloud 配置
-VITE_UNICLOUD_SPACE_ID=your_space_id
-VITE_UNICLOUD_CLIENT_SECRET=your_client_secret
-
-# 微信小程序配置
-MP_APP_ID=your_mini_program_appid
-MP_SECRET=your_mini_program_secret
-EOF
-
-echo "✅ 配置文件已创建"
+echo "  ✅ unocss.config.ts 已创建"
 echo ""
 
-# 修改 main.ts 引入 UnoCSS 和 Pinia
-if [ -f "main.ts" ]; then
-    if ! grep -q "unocss" main.ts; then
-        echo "配置 main.ts..."
-
-        # 创建 main.ts 新文件
-        cat > main.ts << 'EOF'
+# Step 6: 更新 main.ts
+echo "🔄 Step 6: 更新 main.ts..."
+cat > main.ts << 'EOF'
 import { createSSRApp } from 'vue'
 import App from './App.vue'
 
@@ -163,18 +141,31 @@ export function createApp() {
 
   app.use(pinia)
 
+  // 挂载到 globalData 供工具函数使用
+  // @ts-ignore
+  if (typeof getApp !== 'undefined') {
+    // @ts-ignore
+    const globalApp = getApp()
+    if (globalApp && !globalApp.globalData) {
+      // @ts-ignore
+      globalApp.globalData = {}
+    }
+    if (globalApp && globalApp.globalData) {
+      // @ts-ignore
+      globalApp.globalData.store = pinia
+    }
+  }
+
   return {
     app
   }
 }
 EOF
-        echo "✅ main.ts 已配置"
-    fi
-fi
+echo "  ✅ main.ts 已更新"
+echo ""
 
-# 创建 Pinia store 目录结构
-echo "创建 Pinia store 目录..."
-mkdir -p store
+# Step 7: 创建 Pinia store
+echo "🔄 Step 7: 创建 Pinia store..."
 cat > store/user.ts << 'EOF'
 import { defineStore } from 'pinia'
 
@@ -206,6 +197,7 @@ export const useUserStore = defineStore('user', {
     },
     async RestoreFromCache() {
       try {
+        // @ts-ignore
         const cachedOpenid = uni.getStorageSync('openid')
         if (cachedOpenid) {
           this.setOpenid(cachedOpenid)
@@ -220,21 +212,39 @@ export const useUserStore = defineStore('user', {
   }
 })
 EOF
-echo "✅ Pinia store 已创建"
+echo "  ✅ store/user.ts 已创建"
+echo ""
 
+# Step 8: 创建 .env 模板
+echo "🔄 Step 8: 创建 .env 模板..."
+cat > .env.example << 'EOF'
+# 微信小程序配置（已配置，请勿修改）
+MP_APP_ID=wx07932ea2cbbef4c2
+MP_SECRET=your_mini_program_secret
+
+# uniCloud 配置（已关联阿里云空间）
+UNICLOUD_SPACE=aliyun
+EOF
+echo "  ✅ .env.example 已创建"
 echo ""
+
 echo "========================================"
-echo "  初始化完成！"
+echo "  升级完成！"
 echo "========================================"
 echo ""
-echo "下一步："
-echo "  1. 在 HBuilderX 中关联 uniCloud 空间"
-echo "  2. 配置 .env 文件"
-echo "  3. 运行 npm run dev:mp-weixin 启动开发"
+echo "✅ 已完成："
+echo "  - Vue 2 → Vue 3 升级"
+echo "  - main.js → main.ts"
+echo "  - UnoCSS 安装和配置"
+echo "  - Pinia 安装和配置"
+echo "  - store/user.ts 创建"
+echo "  - 目录结构创建（components/store/utils/api）"
+echo ""
+echo "📋 下一步："
+echo "  1. 运行 npm run dev:mp-weixin 启动小程序开发"
+echo "  2. 在 workflow 目录启动 AI 开发工作流"
 echo ""
 echo "开发命令："
 echo "  小程序开发：npm run dev:mp-weixin"
 echo "  H5 开发：   npm run dev:h5"
-echo "  小程序构建：npm run build:mp-weixin"
-echo "  H5 构建：   npm run build:h5"
 echo ""

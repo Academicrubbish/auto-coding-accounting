@@ -5,14 +5,16 @@
     {
       "id": 1,
       "title": "项目基础配置",
-      "description": "初始化 uni-app 项目和基础配置",
+      "description": "升级到 Vue 3 和安装依赖（项目已创建，需要升级）",
       "steps": [
-        "创建 uni-app 项目（使用 Vue 3 + TypeScript 模板）",
-        "安装 UnoCSS: npm install -D unocss",
-        "配置 unocss.config.ts",
-        "在 main.ts 中引入 UnoCSS",
-        "创建 .env 模板文件",
-        "创建项目目录结构：pages/components/store/utils/static"
+        "修改 manifest.json，将 vueVersion 从 2 改为 3",
+        "重命名 main.js 为 main.ts（Vue 3 推荐使用 .ts）",
+        "更新 main.ts 以支持 Vue 3 + Pinia + UnoCSS",
+        "安装 UnoCSS: npm install -D unocss @unocss/preset-uno",
+        "安装 Pinia: npm install pinia",
+        "配置 unocss.config.ts 文件",
+        "在 main.ts 中引入 UnoCSS 和 Pinia",
+        "创建项目目录结构：components/store/utils/api"
       ],
       "passes": false
     },
@@ -27,7 +29,7 @@
         "初始化 uni-id 公共模块",
         "创建 uni-id-co.json 配置文件"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": 3,

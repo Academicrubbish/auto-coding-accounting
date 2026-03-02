@@ -185,32 +185,37 @@ git commit -m "[task description] - completed"
 
 ```
 /
-├── CLAUDE.md          # 本文件 - 工作流说明
-├── task.json          # 任务定义（真实来源）
-├── progress.txt       # 每个会话的进度日志
-├── init.sh            # 初始化脚本
-└── account-app/       # uni-app 应用
-    ├── pages/         # 页面
-    ├── components/    # 组件
-    ├── store/         # Pinia 状态
-    ├── utils/         # 工具函数
-    ├── uni_modules/   # uniCloud 前端 SDK
-    ├── manifest.json  # uni-app 配置
-    ├── pages.json     # 页面路由配置
-    └── uni.scss       # 全局样式
+├── workflow/           # 工作流目录
+│   ├── CLAUDE.md       # 本文件 - 工作流说明
+│   ├── task.json       # 任务定义（真实来源）
+│   ├── progress.txt    # 每个会话的进度日志
+│   ├── architecture.md # 架构设计文档
+│   └── init.sh         # 初始化脚本
+├── pages/              # 页面
+│   └── index/          # 首页（已存在）
+├── components/         # 组件（待创建）
+├── store/              # Pinia 状态（待创建）
+├── utils/              # 工具函数（待创建）
+├── api/                # API 封装（待创建）
+├── uni_modules/         # uniCloud 前端 SDK
+├── uniCloud-aliyun/    # uniCloud 后端
+│   ├── cloudfunctions/ # 云函数（待创建）
+│   └── database/       # 数据库 Schema（待创建）
+├── manifest.json       # uni-app 配置
+├── pages.json          # 页面路由配置
+├── main.js             # 入口文件（需要改为 main.ts）
+└── uni.scss            # 全局样式
 ```
 
-```
-└── uniCloud-aliyun/   # uniCloud 后端
-    ├── cloudfunctions/    # 云函数
-    │   ├── login/         # 微信登录
-    │   ├── account/       # 账户管理
-    │   ├── category/      # 分类管理
-    │   ├── transaction/   # 记账相关
-    │   └── statistics/    # 统计分析
-    └── database/          # 数据库 Schema
-        └── uni-id-co.json # uni-id 配置
-```
+**⚠️ 重要：项目已创建，当前状态：**
+- ✅ uni-app 项目基础结构已创建
+- ✅ uniCloud 空间已关联（阿里云）
+- ✅ 微信小程序 AppID 已配置（wx07932ea2cbbef4c2）
+- ✅ pages/index/index.vue 存在
+- ⚠️ 当前使用 Vue 2，需要升级到 Vue 3
+- ❌ UnoCSS 未安装
+- ❌ Pinia 未安装
+- ❌ store/utils/api 目录未创建
 
 ## 命令
 
