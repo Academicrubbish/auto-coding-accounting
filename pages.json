@@ -28,6 +28,14 @@
 				"navigationBarBackgroundColor": "#ffffff",
 				"navigationBarTextStyle": "black"
 			}
+		},
+		{
+			"path": "pages/detail/index",
+			"style": {
+				"navigationBarTitleText": "交易详情",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
 		}
 	],
 	"globalStyle": {
