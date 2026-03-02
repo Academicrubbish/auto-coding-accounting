@@ -132,7 +132,7 @@
         "添加用户权限验证",
         "在 uniCloud 控制台上传云函数并测试"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": 10,

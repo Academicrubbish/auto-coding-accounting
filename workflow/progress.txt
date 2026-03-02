@@ -163,4 +163,26 @@
 - 游客只能查看系统默认账户，登录用户可查看自己的账户+系统默认账户
 - 禁止修改/删除系统默认账户（create_by == ''）
 
+---
+
+## 2026-03-02 - Task: 分类管理云函数开发
+
+### What was done:
+- ✅ 创建 cloudfunctions/category 目录
+- ✅ 创建 index.js 云函数主文件
+  - 实现 action: list 获取分类列表（支持游客模式和类型筛选）
+  - 实现 action: create 创建分类（需要登录，自动设置 createBy）
+  - 实现 action: update 更新分类（含权限验证）
+  - 实现 action: delete 删除分类（含关联检查）
+- ✅ 创建 package.json 配置文件
+
+### Testing:
+- ✅ 云函数文件已创建并验证语法正确
+- ⚠️ 需要在 HBuilderX 中上传云函数并测试
+
+### Notes:
+- 支持按类型（expense/income）筛选分类
+- 删除分类前检查是否有交易记录使用该分类
+- 禁止修改/删除系统默认分类（create_by == ''）
+
 
