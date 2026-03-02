@@ -8,8 +8,9 @@
 const checkAuth = require('../common/check-auth');
 
 exports.main = async (event, context) => {
-  const { action, data } = event;
-  const { OPENID } = context;
+  const { action, data, openid } = event;
+  // 优先使用 context.OPENID（uni-id 认证），否则使用 event.openid（自定义认证）
+  const userOpenid = context.OPENID || openid;
 
   const db = uniCloud.database();
   const collection = db.collection('transactions');
@@ -18,13 +19,13 @@ exports.main = async (event, context) => {
   try {
     switch (action) {
       case 'monthly':
-        return await getMonthlyStatistics(collection, command, OPENID, data);
+        return await getMonthlyStatistics(collection, command, userOpenid, data);
       case 'daily':
-        return await getDailyStatistics(collection, command, OPENID, data);
+        return await getDailyStatistics(collection, command, userOpenid, data);
       case 'category':
-        return await getCategoryStatistics(collection, command, OPENID, data);
+        return await getCategoryStatistics(collection, command, userOpenid, data);
       case 'overview':
-        return await getOverviewStatistics(collection, command, OPENID, data);
+        return await getOverviewStatistics(collection, command, userOpenid, data);
       default:
         return {
           code: -1,

@@ -58,6 +58,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useUserStore } from '../../store/user'
+
+const userStore = useUserStore()
 
 // 状态
 const currentType = ref<'expense' | 'income'>('expense')
@@ -84,7 +87,8 @@ const loadCategories = async () => {
       name: 'category',
       data: {
         action: 'list',
-        data: { type: currentType.value }
+        data: { type: currentType.value },
+        openid: userStore.openid
       }
     })
 

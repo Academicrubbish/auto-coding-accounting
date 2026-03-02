@@ -1,0 +1,10 @@
+{
+  "name": "statistics",
+  "version": "1.0.0",
+  "description": "统计分析云函数",
+  "main": "index.js",
+  "dependencies": {},
+  "extensions": {
+    "uni-cloud-jql": {}
+  }
+}

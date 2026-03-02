@@ -9,8 +9,9 @@
 const checkAuth = require('../common/check-auth');
 
 exports.main = async (event, context) => {
-  const { action, data } = event;
-  const { OPENID } = context;
+  const { action, data, openid } = event;
+  // 优先使用 context.OPENID（uni-id 认证），否则使用 event.openid（自定义认证）
+  const userOpenid = context.OPENID || openid;
 
   const db = uniCloud.database();
   const collection = db.collection('accounts');
@@ -19,13 +20,13 @@ exports.main = async (event, context) => {
   try {
     switch (action) {
       case 'list':
-        return await listAccounts(collection, command, OPENID);
+        return await listAccounts(collection, command, userOpenid);
       case 'create':
-        return await createAccount(collection, OPENID, data);
+        return await createAccount(collection, userOpenid, data);
       case 'update':
-        return await updateAccount(collection, OPENID, data);
+        return await updateAccount(collection, userOpenid, data);
       case 'delete':
-        return await deleteAccount(collection, OPENID, data);
+        return await deleteAccount(collection, userOpenid, data);
       default:
         return {
           code: -1,

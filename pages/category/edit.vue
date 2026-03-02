@@ -69,6 +69,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useUserStore } from '../../store/user'
+
+const userStore = useUserStore()
 
 // 状态
 const categoryId = ref('')
@@ -109,7 +112,8 @@ const loadCategory = async () => {
       name: 'category',
       data: {
         action: 'list',
-        data: {}
+        data: {},
+        openid: userStore.openid
       }
     })
 
@@ -149,7 +153,7 @@ const handleSubmit = async () => {
 
   try {
     const action = isEdit.value ? 'update' : 'create'
-    const data = {
+    const data: any = {
       ...formData.value,
       type: categoryType.value
     }
@@ -161,7 +165,7 @@ const handleSubmit = async () => {
     // @ts-ignore
     const res = await uniCloud.callFunction({
       name: 'category',
-      data: { action, data }
+      data: { action, data, openid: userStore.openid }
     })
 
     if (res.result.code === 0) {
@@ -210,7 +214,8 @@ const handleDelete = () => {
             name: 'category',
             data: {
               action: 'delete',
-              data: { _id: categoryId.value }
+              data: { _id: categoryId.value },
+              openid: userStore.openid
             }
           })
 
