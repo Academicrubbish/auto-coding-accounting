@@ -141,4 +141,26 @@
 - 游客模式直接跳转首页，不修改用户状态
 - 登录成功后设置 isGuest = false
 
+---
+
+## 2026-03-02 - Task: 账户管理云函数开发
+
+### What was done:
+- ✅ 创建 cloudfunctions/account 目录
+- ✅ 创建 index.js 云函数主文件
+  - 实现 action: list 获取账户列表（支持游客查看系统默认账户）
+  - 实现 action: create 创建账户（需要登录，自动设置 createBy）
+  - 实现 action: update 更新账户（含余额调整和权限验证）
+  - 实现 action: delete 删除账户（含权限验证）
+- ✅ 创建 package.json 配置文件
+
+### Testing:
+- ✅ 云函数文件已创建并验证语法正确
+- ⚠️ 需要在 HBuilderX 中上传云函数并测试
+
+### Notes:
+- 使用 context.OPENID 获取用户 openid（uniCloud 自动提供）
+- 游客只能查看系统默认账户，登录用户可查看自己的账户+系统默认账户
+- 禁止修改/删除系统默认账户（create_by == ''）
+
 

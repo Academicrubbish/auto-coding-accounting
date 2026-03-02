@@ -116,7 +116,7 @@
         "添加用户权限验证（检查 openid 是否匹配数据的 user_id）",
         "在 uniCloud 控制台上传云函数并测试"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": 9,
