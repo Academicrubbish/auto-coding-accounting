@@ -291,7 +291,7 @@
         "支持编辑、删除分类",
         "支持拖拽排序"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": 21,
@@ -305,7 +305,7 @@
         "颜色选择",
         "保存按钮"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": 22,
