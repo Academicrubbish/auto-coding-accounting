@@ -318,7 +318,7 @@
         "创建 components/amount-input/ 金额输入组件",
         "创建 components/date-picker/ 日期选择组件"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": 23,
@@ -342,7 +342,7 @@
         "配置页面标题",
         "配置导航栏样式"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": 25,
@@ -354,7 +354,7 @@
         "定义通用样式类",
         "配置页面背景色、文字颜色"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": 26,
@@ -366,7 +366,7 @@
         "所有 API 调用添加错误处理",
         "所有页面添加加载状态"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": 27,
@@ -378,7 +378,7 @@
         "登录时同步最新数据",
         "记账成功后刷新相关数据"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": 28,
@@ -390,7 +390,7 @@
         "测试 H5 在不同浏览器的显示",
         "调整布局确保在各种设备上正常显示"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": 29,
