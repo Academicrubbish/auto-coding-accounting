@@ -1,0 +1,423 @@
+{
+  "project": "记账软件 (Accounting App)",
+  "description": "基于 uni-app + uniCloud 的简洁记账应用",
+  "tasks": [
+    {
+      "id": 1,
+      "title": "项目基础配置",
+      "description": "初始化 uni-app 项目和基础配置",
+      "steps": [
+        "创建 uni-app 项目（使用 Vue 3 + TypeScript 模板）",
+        "安装 UnoCSS: npm install -D unocss",
+        "配置 unocss.config.ts",
+        "在 main.ts 中引入 UnoCSS",
+        "创建 .env 模板文件",
+        "创建项目目录结构：pages/components/store/utils/static"
+      ],
+      "passes": false
+    },
+    {
+      "id": 2,
+      "title": "uniCloud 环境配置",
+      "description": "配置 uniCloud 云开发环境",
+      "steps": [
+        "关联 uniCloud 空间（阿里云）",
+        "创建 uniCloud-aliyun 目录结构",
+        "配置 cloudfunctions 和 database 目录",
+        "初始化 uni-id 公共模块",
+        "创建 uni-id-co.json 配置文件"
+      ],
+      "passes": false
+    },
+    {
+      "id": 3,
+      "title": "云数据库 Schema 设计",
+      "description": "创建数据库集合和 Schema",
+      "steps": [
+        "创建 users 集合 Schema（_id, openid, nickname, avatar, created_at, updated_at），配置 permission 为读写需登录",
+        "创建 accounts 集合 Schema（_id, user_id, name, type, balance, icon, sort_order, is_default, created_at, updated_at），配置 user_id 索引",
+        "创建 categories 集合 Schema（_id, user_id, name, type, icon, color, sort_order, is_default, created_at, updated_at），配置 user_id+type 复合索引",
+        "创建 transactions 集合 Schema（_id, user_id, account_id, category_id, type, amount, remark, images, transaction_date, created_at, updated_at），配置 user_id+transaction_date 复合索引",
+        "在 Schema 中添加 createBy 字段用于数据隔离（createBy 为空字符串表示系统默认数据）",
+        "在 uniCloud 控制台创建集合并上传 Schema 文件"
+      ],
+      "passes": false
+    },
+    {
+      "id": 4,
+      "title": "工具函数封装",
+      "description": "创建前端工具函数",
+      "steps": [
+        "创建 utils/request.js 封装 uniCloud.callFunction，使用延迟初始化避免 uniCloud 未就绪问题",
+        "创建 utils/auth-cache.js 管理 token 和 openid 的本地缓存",
+        "创建 utils/api-auth.js 实现 withAuth 高阶函数，包装需要登录的 API 调用",
+        "创建 utils/auth.js 提供 isLoggedIn、checkLoginBeforeRequest 等认证辅助函数",
+        "创建 utils/date.js 日期格式化函数",
+        "创建 utils/format.js 金额格式化函数"
+      ],
+      "passes": false
+    },
+    {
+      "id": 5,
+      "title": "Pinia 状态管理配置",
+      "description": "配置 Pinia 和创建 Store",
+      "steps": [
+        "安装 Pinia: npm install pinia",
+        "在 main.ts 中配置 Pinia，并挂载到 globalData 供工具函数使用",
+        "创建 store/user.js 用户状态管理，包含 isGuest（游客状态）、openid、userData、authStateVersion 状态",
+        "创建 store/account.js 账户状态管理",
+        "创建 store/category.js 分类状态管理",
+        "创建 store/transaction.js 交易状态管理",
+        "实现 RestoreFromCache action 从本地缓存恢复登录状态"
+      ],
+      "passes": false
+    },
+    {
+      "id": 6,
+      "title": "登录云函数开发",
+      "description": "实现微信授权登录云函数",
+      "steps": [
+        "创建 cloudfunctions/login 目录和 index.js",
+        "创建 package.json 配置文件",
+        "实现微信 code2session 调用（使用 uniCloud.httpclient.request）",
+        "查询或创建 users 集合记录",
+        "为新用户创建默认分类和默认账户",
+        "返回用户信息、openid 和 token",
+        "在 uniCloud 控制台上传云函数并测试"
+      ],
+      "passes": false
+    },
+    {
+      "id": 7,
+      "title": "登录页面开发",
+      "description": "实现用户登录页面",
+      "steps": [
+        "创建 pages/login/index.vue",
+        "实现微信授权按钮",
+        "调用 login 云函数",
+        "保存 token 到本地存储",
+        "登录成功后跳转到首页",
+        "处理登录失败情况"
+      ],
+      "passes": false
+    },
+    {
+      "id": 8,
+      "title": "账户管理云函数开发",
+      "description": "实现账户增删改查云函数",
+      "steps": [
+        "创建 cloudfunctions/account 目录和 index.js",
+        "创建 package.json 配置文件",
+        "实现 action: list 获取用户账户列表（支持游客查看系统默认账户）",
+        "实现 action: create 创建账户（需要登录，自动设置 createBy 为用户 openid）",
+        "实现 action: update 更新账户（含余额调整）",
+        "实现 action: delete 删除账户",
+        "添加用户权限验证（检查 openid 是否匹配数据的 user_id）",
+        "在 uniCloud 控制台上传云函数并测试"
+      ],
+      "passes": false
+    },
+    {
+      "id": 9,
+      "title": "分类管理云函数开发",
+      "description": "实现分类增删改查云函数",
+      "steps": [
+        "创建 cloudfunctions/category 目录和 index.js",
+        "创建 package.json 配置文件",
+        "实现 action: list 获取分类列表（已登录返回用户分类+系统默认分类，游客返回系统默认分类）",
+        "实现 action: create 创建分类（需要登录，自动设置 createBy）",
+        "实现 action: update 更新分类",
+        "实现 action: delete 删除分类（不能删除系统默认分类）",
+        "添加用户权限验证",
+        "在 uniCloud 控制台上传云函数并测试"
+      ],
+      "passes": false
+    },
+    {
+      "id": 10,
+      "title": "交易记录云函数开发",
+      "description": "实现交易记录增删改查云函数",
+      "steps": [
+        "创建 cloudfunctions/transaction/index.js",
+        "实现 action: list 获取交易列表（支持分页、筛选、搜索）",
+        "实现 action: create 创建交易（自动更新账户余额）",
+        "实现 action: update 更新交易（重新计算余额）",
+        "实现 action: delete 删除交易（恢复余额）",
+        "添加用户权限验证",
+        "上传云函数并测试"
+      ],
+      "passes": false
+    },
+    {
+      "id": 11,
+      "title": "统计分析云函数开发",
+      "description": "实现统计分析云函数",
+      "steps": [
+        "创建 cloudfunctions/statistics/index.js",
+        "实现 action: monthly 获取月度收支统计",
+        "实现每日收支数据聚合",
+        "实现分类占比统计",
+        "返回总收入、总支出、结余",
+        "上传云函数并测试"
+      ],
+      "passes": false
+    },
+    {
+      "id": 12,
+      "title": "首页开发",
+      "description": "实现首页界面",
+      "steps": [
+        "创建 pages/index/index.vue",
+        "显示用户总资产（所有账户余额总和）",
+        "显示本月收支统计",
+        "显示近期交易记录（最近5条）",
+        "添加快捷记账按钮",
+        "底部导航栏（首页、统计、我的）"
+      ],
+      "passes": false
+    },
+    {
+      "id": 13,
+      "title": "记账页面开发",
+      "description": "实现记账功能页面",
+      "steps": [
+        "创建 pages/record/index.vue",
+        "实现金额输入组件（大号数字显示）",
+        "实现收支类型切换（支出/收入）",
+        "实现分类选择组件",
+        "实现账户选择组件",
+        "实现日期选择",
+        "实现备注输入",
+        "提交创建交易",
+        "成功后返回首页"
+      ],
+      "passes": false
+    },
+    {
+      "id": 14,
+      "title": "交易列表页面开发",
+      "description": "实现交易记录列表页面",
+      "steps": [
+        "创建 pages/list/index.vue",
+        "显示交易记录列表（按日期分组）",
+        "支持下拉刷新",
+        "支持上拉加载更多",
+        "顶部筛选器（日期范围、分类、账户）",
+        "搜索功能",
+        "点击进入详情页"
+      ],
+      "passes": false
+    },
+    {
+      "id": 15,
+      "title": "交易详情页面开发",
+      "description": "实现交易详情页面",
+      "steps": [
+        "创建 pages/detail/index.vue",
+        "显示交易完整信息",
+        "显示编辑和删除按钮",
+        "实现编辑功能（跳转到记账页并回填数据）",
+        "实现删除功能（二次确认）"
+      ],
+      "passes": false
+    },
+    {
+      "id": 16,
+      "title": "统计页面开发",
+      "description": "实现统计分析页面",
+      "steps": [
+        "创建 pages/stats/index.vue",
+        "显示月份选择器",
+        "显示本月总收入、总支出、结余",
+        "显示每日收支趋势图（使用 uCharts）",
+        "显示分类占比饼图（支出/收入）",
+        "点击分类查看该分类的交易记录"
+      ],
+      "passes": false
+    },
+    {
+      "id": 17,
+      "title": "我的页面开发",
+      "description": "实现个人中心页面",
+      "steps": [
+        "创建 pages/mine/index.vue",
+        "显示用户头像和昵称",
+        "显示账户管理入口",
+        "显示分类管理入口",
+        "显示设置入口（清除缓存、关于等）",
+        "显示退出登录按钮"
+      ],
+      "passes": false
+    },
+    {
+      "id": 18,
+      "title": "账户管理页面开发",
+      "description": "实现账户管理页面",
+      "steps": [
+        "创建 pages/account/index.vue",
+        "显示用户所有账户列表",
+        "显示每个账户的名称、类型、余额",
+        "添加新账户按钮",
+        "支持编辑、删除账户",
+        "显示总资产"
+      ],
+      "passes": false
+    },
+    {
+      "id": 19,
+      "title": "账户编辑页面开发",
+      "description": "实现账户添加/编辑页面",
+      "steps": [
+        "创建 pages/account/edit.vue",
+        "账户名称输入",
+        "账户类型选择（现金/银行卡/信用卡/其他）",
+        "初始余额输入",
+        "图标选择",
+        "设为默认账户开关",
+        "保存按钮"
+      ],
+      "passes": false
+    },
+    {
+      "id": 20,
+      "title": "分类管理页面开发",
+      "description": "实现分类管理页面",
+      "steps": [
+        "创建 pages/category/index.vue",
+        "支出/收入分类切换",
+        "显示分类列表",
+        "添加新分类按钮",
+        "支持编辑、删除分类",
+        "支持拖拽排序"
+      ],
+      "passes": false
+    },
+    {
+      "id": 21,
+      "title": "分类编辑页面开发",
+      "description": "实现分类添加/编辑页面",
+      "steps": [
+        "创建 pages/category/edit.vue",
+        "分类名称输入",
+        "分类类型选择（支出/收入）",
+        "图标选择（预设图标列表）",
+        "颜色选择",
+        "保存按钮"
+      ],
+      "passes": false
+    },
+    {
+      "id": 22,
+      "title": "公共组件开发",
+      "description": "创建可复用的公共组件",
+      "steps": [
+        "创建 components/tx-card/ 交易卡片组件",
+        "创建 components/category-picker/ 分类选择器组件",
+        "创建 components/account-picker/ 账户选择器组件",
+        "创建 components/amount-input/ 金额输入组件",
+        "创建 components/date-picker/ 日期选择组件"
+      ],
+      "passes": false
+    },
+    {
+      "id": 23,
+      "title": "默认数据初始化",
+      "description": "创建系统默认数据",
+      "steps": [
+        "在 uniCloud 数据库中创建系统默认分类（createBy 为空字符串）",
+        "创建系统默认账户（createBy 为空字符串）",
+        "在登录云函数中检测新用户时，无需创建默认数据（直接查询 createBy 为空的数据）",
+        "确保前端查询时能正确合并用户数据和系统默认数据"
+      ],
+      "passes": false
+    },
+    {
+      "id": 24,
+      "title": "页面路由配置",
+      "description": "配置 pages.json 和 tabBar",
+      "steps": [
+        "配置所有页面路由",
+        "配置底部 tabBar（首页、统计、我的）",
+        "配置页面标题",
+        "配置导航栏样式"
+      ],
+      "passes": false
+    },
+    {
+      "id": 25,
+      "title": "全局样式和主题",
+      "description": "配置全局样式和主题色",
+      "steps": [
+        "创建 uni.scss 全局样式变量",
+        "定义主题色、辅助色",
+        "定义通用样式类",
+        "配置页面背景色、文字颜色"
+      ],
+      "passes": false
+    },
+    {
+      "id": 26,
+      "title": "错误处理和加载状态",
+      "description": "完善错误处理和加载状态",
+      "steps": [
+        "创建统一的错误提示组件（Toast）",
+        "创建加载中组件（Loading）",
+        "所有 API 调用添加错误处理",
+        "所有页面添加加载状态"
+      ],
+      "passes": false
+    },
+    {
+      "id": 27,
+      "title": "数据持久化和缓存",
+      "description": "优化数据加载和缓存策略",
+      "steps": [
+        "实现账户列表本地缓存",
+        "实现分类列表本地缓存",
+        "登录时同步最新数据",
+        "记账成功后刷新相关数据"
+      ],
+      "passes": false
+    },
+    {
+      "id": 28,
+      "title": "响应式适配",
+      "description": "适配不同屏幕尺寸",
+      "steps": [
+        "使用 rpx 单位确保自适应",
+        "测试不同尺寸的小程序设备",
+        "测试 H5 在不同浏览器的显示",
+        "调整布局确保在各种设备上正常显示"
+      ],
+      "passes": false
+    },
+    {
+      "id": 29,
+      "title": "权限验证中间件",
+      "description": "实现云函数权限验证",
+      "steps": [
+        "创建公共模块 check-auth.js",
+        "验证 token 有效性",
+        "验证用户是否为数据所有者",
+        "在所有云函数中引入权限验证"
+      ],
+      "passes": false
+    },
+    {
+      "id": 30,
+      "title": "完整流程测试",
+      "description": "完整测试所有功能流程",
+      "steps": [
+        "测试登录流程",
+        "测试记账完整流程（选择账户、分类、输入金额）",
+        "测试交易列表查看和筛选",
+        "测试统计图表显示",
+        "测试账户管理（增删改查）",
+        "测试分类管理（增删改查）",
+        "测试交易编辑和删除",
+        "测试数据同步和刷新"
+      ],
+      "passes": false
+    }
+  ]
+}
