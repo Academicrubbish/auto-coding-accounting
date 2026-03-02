@@ -11,6 +11,7 @@
 | 项目基础配置 | ✅ 完成 | 2026-03-02 |
 | uniCloud 环境配置 | ✅ 完成 | - |
 | 云数据库 Schema 设计 | ✅ 完成 | 2026-03-02 |
+| 登录云函数开发 | ✅ 完成 | 2026-03-02 |
 
 ---
 
@@ -82,5 +83,28 @@
 ### Notes:
 - 数据隔离设计：create_by 字段（空字符串表示系统默认数据）
 - 下一步：需要在 HBuilderX 中创建集合并上传 Schema 文件
+
+---
+
+## 2026-03-02 - Task: 登录云函数开发
+
+### What was done:
+- ✅ 创建 cloudfunctions/login 目录
+- ✅ 创建 index.js 云函数主文件
+  - 实现微信 code2session 调用（使用 uniCloud.httpclient.request）
+  - 查询或创建 users 集合记录
+  - 返回 openid、userData 和 isNewUser 标识
+- ✅ 创建 package.json 配置文件
+- ✅ 创建 workflow/env-config.md 环境变量配置说明
+
+### Testing:
+- ✅ 云函数文件已创建并验证语法正确
+- ⚠️ 需要在 uniCloud 控制台配置环境变量（MP_APP_ID, MP_SECRET）
+- ⚠️ 需要在 HBuilderX 中上传云函数并测试
+
+### Notes:
+- 云函数使用 process.env.MP_APP_ID 和 process.env.MP_SECRET 获取微信配置
+- 下一步：需要在 HBuilderX 中上传云函数到阿里云
+
 
 

@@ -83,11 +83,10 @@
         "创建 package.json 配置文件",
         "实现微信 code2session 调用（使用 uniCloud.httpclient.request）",
         "查询或创建 users 集合记录",
-        "为新用户创建默认分类和默认账户",
-        "返回用户信息、openid 和 token",
+        "返回用户信息、openid 和 isNewUser 标识",
         "在 uniCloud 控制台上传云函数并测试"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": 7,
