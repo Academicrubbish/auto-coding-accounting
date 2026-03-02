@@ -106,5 +106,39 @@
 - 云函数使用 process.env.MP_APP_ID 和 process.env.MP_SECRET 获取微信配置
 - 下一步：需要在 HBuilderX 中上传云函数到阿里云
 
+---
+
+## 2026-03-02 - Task: 登录页面开发
+
+### What was done:
+- ✅ 创建 pages/login/index.vue
+  - Logo 区域：显示应用图标和名称
+  - 授权说明：提示用户登录后可保存数据
+  - 微信授权登录按钮：调用 handleLogin 函数
+  - 游客模式按钮：直接跳转首页
+  - 用户协议：底部链接显示
+- ✅ 实现登录逻辑：
+  - 调用 uni.login() 获取微信 code
+  - 调用 login 云函数验证身份
+  - 保存 openid 和 userData 到 user store
+  - 使用 setAuthCache 保存到本地缓存
+  - 登录成功后跳转首页
+- ✅ 更新 pages.json：
+  - 添加 login 页面路由
+  - 配置全局导航栏样式
+  - 配置底部 tabBar（首页、统计、我的）
+- ✅ 使用 Vue 3 Composition API + TypeScript
+- ✅ 渐变背景样式设计
+
+### Testing:
+- ✅ 页面文件已创建并验证语法正确
+- ✅ pages.json 路由配置已添加
+- ⚠️ 需要在微信开发者工具中测试登录流程
+- ⚠️ 需要上传 login 云函数后才能测试完整登录
+
+### Notes:
+- 使用 @ts-ignore 忽略 uni API 类型警告（uni-app 类型定义不完整）
+- 游客模式直接跳转首页，不修改用户状态
+- 登录成功后设置 isGuest = false
 
 
