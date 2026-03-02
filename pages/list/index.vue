@@ -1,27 +1,31 @@
 <template>
   <view class="list-container">
-    <!-- 筛选栏 -->
-    <view class="filter-bar">
-      <view class="filter-item" @tap="showFilterPopup = true">
-        <text class="filter-icon">🔍</text>
-        <text class="filter-text">筛选</text>
-      </view>
-      <view class="filter-summary" v-if="hasActiveFilters">
-        <text class="summary-text">{{ filterSummary }}</text>
-        <text class="clear-btn" @tap="clearFilters">清除</text>
-      </view>
-    </view>
-
-    <!-- 交易列表 -->
-    <scroll-view
-      class="transaction-scroll"
-      scroll-y
-      refresher-enabled
-      :refresher-triggered="isRefreshing"
-      @refresherrefresh="onRefresh"
-      @scrolltolower="loadMore"
-      lower-threshold="100"
+    <!-- 使用 z-paging 组件 -->
+    <z-paging
+      ref="pagingRef"
+      v-model="transactions"
+      @query="queryList"
+      :default-page-size="pageSize"
+      empty-text="暂无交易记录"
+      empty-view-img="/static/empty.png"
+      empty-view-text="暂无交易记录"
+      empty-view-btn-text="去记账"
+      @emptyViewClick="goRecord"
     >
+      <!-- 顶部筛选栏插槽 -->
+      <template #top>
+        <view class="filter-bar">
+          <view class="filter-item" @tap="showFilterPopup = true">
+            <text class="filter-icon">🔍</text>
+            <text class="filter-text">筛选</text>
+          </view>
+          <view class="filter-summary" v-if="hasActiveFilters">
+            <text class="summary-text">{{ filterSummary }}</text>
+            <text class="clear-btn" @tap="clearFilters">清除</text>
+          </view>
+        </view>
+      </template>
+
       <!-- 分组列表 -->
       <view class="grouped-list" v-if="groupedTransactions.length > 0">
         <view
@@ -62,21 +66,7 @@
           </view>
         </view>
       </view>
-
-      <!-- 空状态 -->
-      <view class="empty-state" v-else-if="!isLoading">
-        <text class="empty-icon">📊</text>
-        <text class="empty-text">暂无交易记录</text>
-        <text class="empty-hint">点击右下角按钮开始记账</text>
-      </view>
-
-      <!-- 加载更多 -->
-      <view class="load-more" v-if="groupedTransactions.length > 0">
-        <text v-if="isLoadingMore">加载中...</text>
-        <text v-else-if="!hasMore">没有更多了</text>
-        <text v-else>上拉加载更多</text>
-      </view>
-    </scroll-view>
+    </z-paging>
 
     <!-- 新建按钮 -->
     <view class="fab-add" @tap="goRecord">
@@ -252,18 +242,18 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useUserStore } from '@/store/user'
+
+const userStore = useUserStore()
+
+// z-paging ref
+const pagingRef = ref()
 
 // 状态
 const transactions = ref<any[]>([])
-const isLoading = ref(false)
-const isRefreshing = ref(false)
-const isLoadingMore = ref(false)
-const hasMore = ref(true)
 
 // 分页
-const currentPage = ref(1)
 const pageSize = 20
-const total = ref(0)
 
 // 筛选
 const showFilterPopup = ref(false)
@@ -331,7 +321,21 @@ const groupedTransactions = computed(() => {
   const groups: Record<string, any> = {}
 
   transactions.value.forEach(t => {
-    const date = new Date(t.transaction_date)
+    // 处理日期格式：支持 Date 对象、ISO 字符串、时间戳
+    let date: Date
+    if (t.transaction_date && t.transaction_date.$date) {
+      // uniCloud Date 格式
+      date = new Date(t.transaction_date.$date)
+    } else {
+      date = new Date(t.transaction_date)
+    }
+
+    // 检查日期是否有效
+    if (isNaN(date.getTime())) {
+      console.warn('无效的日期格式:', t.transaction_date)
+      return
+    }
+
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
     if (!groups[dateKey]) {
@@ -384,8 +388,14 @@ const formatMoney = (val: number) => {
 /**
  * 格式化时间
  */
-const formatTime = (dateStr: string) => {
-  const date = new Date(dateStr)
+const formatTime = (dateStr: any) => {
+  let date: Date
+  if (dateStr && dateStr.$date) {
+    // uniCloud Date 格式
+    date = new Date(dateStr.$date)
+  } else {
+    date = new Date(dateStr)
+  }
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
@@ -411,70 +421,51 @@ const getAccountName = (item: any) => {
 }
 
 /**
- * 加载交易列表
+ * z-paging 分页查询
  */
-const loadTransactions = async (isRefresh = false, isLoadMore = false) => {
-  if (isLoading.value && !isRefresh) return
-  if (isLoadMore && (!hasMore.value || isLoadingMore.value)) return
-
-  if (isRefresh) {
-    isRefreshing.value = true
-  } else if (isLoadMore) {
-    isLoadingMore.value = true
-  } else {
-    isLoading.value = true
-  }
+const queryList = async (pageNo: number, pageSize: number) => {
+  console.log('===== queryList 开始 =====')
+  console.log('pageNo:', pageNo, 'pageSize:', pageSize)
+  console.log('openid:', userStore.openid)
+  console.log('调用云函数名称: transaction')
 
   try {
-    const page = isRefresh ? 1 : (isLoadMore ? currentPage.value + 1 : 1)
+    const functionName = 'transaction'
+    console.log('准备调用云函数:', functionName)
 
     // @ts-ignore
     const res = await uniCloud.callFunction({
-      name: 'transaction',
+      name: functionName,
       data: {
         action: 'list',
+        openid: userStore.openid,
         data: {
-          page: page,
+          page: pageNo,
           pageSize: pageSize,
           ...filters.value
         }
       }
     })
 
+    console.log('云函数返回完整结果:', res.result)
+    console.log('返回的数据列表:', res.result?.data?.list)
+
     if (res.result.code === 0) {
       const result = res.result.data
-
-      if (isRefresh || !isLoadMore) {
-        transactions.value = result.list || []
-      } else {
-        transactions.value = [...transactions.value, ...(result.list || [])]
-      }
-
-      currentPage.value = page
-      total.value = result.total || 0
-      hasMore.value = result.hasMore || false
+      console.log('result.list:', result.list)
+      console.log('result.list 长度:', result.list?.length)
+      // 将结果传给 z-paging，它会自动处理分页和数据拼接
+      pagingRef.value?.complete(result.list || [])
+    } else {
+      console.error('云函数返回错误:', res.result.message)
+      // 请求失败，传递 false 告知 z-paging
+      pagingRef.value?.complete(false)
     }
   } catch (error) {
     console.error('加载交易列表失败：', error)
-  } finally {
-    isLoading.value = false
-    isRefreshing.value = false
-    isLoadingMore.value = false
+    // 请求失败，传递 false 告知 z-paging
+    pagingRef.value?.complete(false)
   }
-}
-
-/**
- * 下拉刷新
- */
-const onRefresh = () => {
-  loadTransactions(true, false)
-}
-
-/**
- * 上拉加载更多
- */
-const loadMore = () => {
-  loadTransactions(false, true)
 }
 
 /**
@@ -510,7 +501,8 @@ const clearFilters = () => {
   }
   selectedCategoryName.value = ''
   selectedAccountName.value = ''
-  loadTransactions(true, false)
+  // 刷新列表
+  pagingRef.value?.reload()
 }
 
 /**
@@ -518,7 +510,8 @@ const clearFilters = () => {
  */
 const applyFilters = () => {
   showFilterPopup.value = false
-  loadTransactions(true, false)
+  // 刷新列表
+  pagingRef.value?.reload()
 }
 
 /**
@@ -596,7 +589,7 @@ const loadFilterOptions = async () => {
     // @ts-ignore
     const catRes = await uniCloud.callFunction({
       name: 'category',
-      data: { action: 'list', data: {} }
+      data: { action: 'list', openid: userStore.openid, data: {} }
     })
     if (catRes.result.code === 0) {
       filterCategories.value = catRes.result.data || []
@@ -610,7 +603,7 @@ const loadFilterOptions = async () => {
     // @ts-ignore
     const accRes = await uniCloud.callFunction({
       name: 'account',
-      data: { action: 'list' }
+      data: { action: 'list', openid: userStore.openid }
     })
     if (accRes.result.code === 0) {
       filterAccounts.value = accRes.result.data || []
@@ -624,8 +617,20 @@ const loadFilterOptions = async () => {
  * 页面加载
  */
 onMounted(() => {
-  loadTransactions()
   loadFilterOptions()
+})
+
+/**
+ * 页面显示时刷新数据
+ */
+const onShow = () => {
+  // 刷新列表
+  pagingRef.value?.reload()
+}
+
+// 暴露 onShow 供 uni-app 调用
+defineExpose({
+  onShow
 })
 </script>
 
@@ -683,11 +688,7 @@ onMounted(() => {
   margin-left: 10rpx;
 }
 
-/* 交易列表 */
-.transaction-scroll {
-  height: calc(100vh - 120rpx);
-}
-
+/* 分组列表 */
 .grouped-list {
   padding-bottom: 120rpx;
 }
@@ -768,38 +769,6 @@ onMounted(() => {
 
 .item-amount.expense {
   color: #333333;
-}
-
-/* 空状态 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 150rpx 0;
-}
-
-.empty-icon {
-  font-size: 100rpx;
-  margin-bottom: 30rpx;
-}
-
-.empty-text {
-  font-size: 30rpx;
-  color: #999999;
-  margin-bottom: 10rpx;
-}
-
-.empty-hint {
-  font-size: 24rpx;
-  color: #cccccc;
-}
-
-/* 加载更多 */
-.load-more {
-  text-align: center;
-  padding: 30rpx;
-  font-size: 26rpx;
-  color: #999999;
 }
 
 /* 悬浮按钮 */

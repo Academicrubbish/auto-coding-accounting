@@ -5,7 +5,7 @@
  * 功能：收支统计分析
  */
 
-const checkAuth = require('../common/check-auth');
+const checkAuth = require('check-auth');
 
 exports.main = async (event, context) => {
   const { action, data, openid } = event;
@@ -243,11 +243,30 @@ async function getCategoryStatistics(collection, command, openid, data) {
     totalAmount += t.amount;
   });
 
-  // 转换为数组并计算占比
-  const categoryList = Object.values(categoryData).map(item => ({
-    ...item,
-    percentage: totalAmount > 0 ? (item.amount / totalAmount * 100).toFixed(2) : 0
-  })).sort((a, b) => b.amount - a.amount);
+  // 获取分类信息
+  const categoryIds = Object.keys(categoryData);
+  const db = uniCloud.database();
+  const categoryCollection = db.collection('categories');
+  const categoriesRes = await categoryCollection.where({
+    _id: command.in(categoryIds)
+  }).get();
+
+  const categoriesMap = {};
+  categoriesRes.data.forEach(cat => {
+    categoriesMap[cat._id] = cat;
+  });
+
+  // 转换为数组并计算占比，同时添加分类名称和图标
+  const categoryList = Object.values(categoryData).map(item => {
+    const category = categoriesMap[item.category_id];
+    return {
+      ...item,
+      categoryName: category ? category.name : '未分类',
+      categoryIcon: category ? category.icon : '',
+      categoryColor: category ? category.color : '#667eea',
+      percentage: totalAmount > 0 ? (item.amount / totalAmount * 100).toFixed(2) : 0
+    };
+  }).sort((a, b) => b.amount - a.amount);
 
   return {
     code: 0,
@@ -315,6 +334,48 @@ async function getOverviewStatistics(collection, command, openid, data) {
     .limit(5)
     .get();
 
+  // 关联查询账户和分类信息
+  const categoryCollection = db.collection('categories');
+
+  // 获取所有相关的账户ID和分类ID
+  const accountIds = [...new Set(recentRes.data.map(t => t.account_id).filter(id => id))];
+  const categoryIds = [...new Set(recentRes.data.map(t => t.category_id).filter(id => id))];
+
+  // 批量查询账户和分类
+  let accountsMap = {};
+  let categoriesMap = {};
+
+  if (accountIds.length > 0) {
+    const accountsRes = await accountCollection.where({
+      _id: command.in(accountIds)
+    }).get();
+    accountsRes.data.forEach(acc => {
+      accountsMap[acc._id] = acc;
+    });
+  }
+
+  if (categoryIds.length > 0) {
+    const categoriesRes = await categoryCollection.where({
+      _id: command.in(categoryIds)
+    }).get();
+    categoriesRes.data.forEach(cat => {
+      categoriesMap[cat._id] = cat;
+    });
+  }
+
+  // 合并数据
+  const recentTransactions = recentRes.data.map(t => {
+    const account = accountsMap[t.account_id];
+    const category = categoriesMap[t.category_id];
+    return {
+      ...t,
+      accountName: account ? account.name : '未知账户',
+      accountIcon: account ? account.icon : '',
+      categoryName: category ? category.name : '未分类',
+      categoryIcon: category ? category.icon : ''
+    };
+  });
+
   return {
     code: 0,
     message: '获取成功',
@@ -323,7 +384,7 @@ async function getOverviewStatistics(collection, command, openid, data) {
       monthIncome: monthIncome,
       monthExpense: monthExpense,
       monthBalance: monthIncome - monthExpense,
-      recentTransactions: recentRes.data
+      recentTransactions: recentTransactions
     }
   };
 }

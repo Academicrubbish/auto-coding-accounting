@@ -6,7 +6,7 @@
  * 特性：自动更新账户余额
  */
 
-const checkAuth = require('../common/check-auth');
+const checkAuth = require('check-auth');
 
 exports.main = async (event, context) => {
   const { action, data, openid } = event;
@@ -116,11 +116,56 @@ async function listTransactions(collection, openid, data) {
     .limit(pageSize)
     .get();
 
+  // 关联查询账户和分类信息
+  const accountCollection = db.collection('accounts');
+  const categoryCollection = db.collection('categories');
+
+  // 获取所有相关的账户ID和分类ID
+  const accountIds = [...new Set(res.data.map(t => t.account_id).filter(id => id))];
+  const categoryIds = [...new Set(res.data.map(t => t.category_id).filter(id => id))];
+
+  // 批量查询账户和分类
+  let accountsMap = {};
+  let categoriesMap = {};
+
+  if (accountIds.length > 0) {
+    const accountsRes = await accountCollection.where({
+      _id: db.command.in(accountIds)
+    }).get();
+    accountsMap = {};
+    accountsRes.data.forEach(acc => {
+      accountsMap[acc._id] = acc;
+    });
+  }
+
+  if (categoryIds.length > 0) {
+    const categoriesRes = await categoryCollection.where({
+      _id: db.command.in(categoryIds)
+    }).get();
+    categoriesMap = {};
+    categoriesRes.data.forEach(cat => {
+      categoriesMap[cat._id] = cat;
+    });
+  }
+
+  // 合并数据
+  const list = res.data.map(t => {
+    const account = accountsMap[t.account_id];
+    const category = categoriesMap[t.category_id];
+    return {
+      ...t,
+      accountName: account ? account.name : '未知账户',
+      accountIcon: account ? account.icon : '',
+      categoryName: category ? category.name : '未分类',
+      categoryIcon: category ? category.icon : ''
+    };
+  });
+
   return {
     code: 0,
     message: '获取成功',
     data: {
-      list: res.data,
+      list: list,
       total: total,
       page: page,
       pageSize: pageSize,

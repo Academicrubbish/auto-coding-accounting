@@ -6,7 +6,7 @@
  * 支持：游客查看系统默认分类，登录用户管理自己的分类
  */
 
-const checkAuth = require('../common/check-auth');
+const checkAuth = require('check-auth');
 
 exports.main = async (event, context) => {
   const { action, data, openid } = event;

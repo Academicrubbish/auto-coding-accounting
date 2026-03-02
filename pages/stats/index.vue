@@ -178,6 +178,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useUserStore } from '@/store/user'
+
+const userStore = useUserStore()
 
 // 状态
 const currentYear = ref(new Date().getFullYear())
@@ -323,6 +326,7 @@ const loadMonthlyData = async () => {
       name: 'statistics',
       data: {
         action: 'monthly',
+        openid: userStore.openid,
         data: {
           year: currentYear.value,
           month: currentMonth.value
@@ -359,6 +363,7 @@ const loadCategoryData = async () => {
       name: 'statistics',
       data: {
         action: 'category',
+        openid: userStore.openid,
         data: {
           type: categoryType.value,
           start_date: startDate,

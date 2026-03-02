@@ -89,6 +89,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useUserStore } from '@/store/user'
+
+const userStore = useUserStore()
 
 // 从页面参数获取交易ID
 const transactionId = ref('')
@@ -152,6 +155,7 @@ const loadTransaction = async () => {
       name: 'transaction',
       data: {
         action: 'getById',
+        openid: userStore.openid,
         data: { _id: transactionId.value }
       }
     })
@@ -209,6 +213,7 @@ const confirmDelete = async () => {
       name: 'transaction',
       data: {
         action: 'delete',
+        openid: userStore.openid,
         data: { _id: transactionId.value }
       }
     })

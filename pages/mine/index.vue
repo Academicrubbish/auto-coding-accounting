@@ -148,7 +148,8 @@ const loadUserStats = async () => {
     const res = await uniCloud.callFunction({
       name: 'statistics',
       data: {
-        action: 'overview'
+        action: 'overview',
+        openid: userStore.openid
       }
     })
 
@@ -162,7 +163,7 @@ const loadUserStats = async () => {
     // @ts-ignore
     const accRes = await uniCloud.callFunction({
       name: 'account',
-      data: { action: 'list' }
+      data: { action: 'list', openid: userStore.openid }
     })
     if (accRes.result.code === 0) {
       accountCount.value = accRes.result.data?.length || 0
@@ -172,7 +173,7 @@ const loadUserStats = async () => {
     // @ts-ignore
     const catRes = await uniCloud.callFunction({
       name: 'category',
-      data: { action: 'list', data: {} }
+      data: { action: 'list', data: {}, openid: userStore.openid }
     })
     if (catRes.result.code === 0) {
       categoryCount.value = catRes.result.data?.length || 0

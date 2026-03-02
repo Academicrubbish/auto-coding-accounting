@@ -112,7 +112,8 @@ const loadHomeData = async () => {
     const res = await uniCloud.callFunction({
       name: 'statistics',
       data: {
-        action: 'overview'
+        action: 'overview',
+        openid: userStore.openid  // 传递用户 openid
       }
     })
 
@@ -129,6 +130,8 @@ const loadHomeData = async () => {
           categoryName: t.remark || '交易'
         }
       })
+    } else {
+      console.error('加载首页数据失败：', res.result.message)
     }
   } catch (error) {
     console.error('加载首页数据失败：', error)
