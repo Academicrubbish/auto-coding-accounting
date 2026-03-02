@@ -207,7 +207,7 @@
         "搜索功能",
         "点击进入详情页"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": 15,
