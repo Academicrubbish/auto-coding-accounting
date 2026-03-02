@@ -10,6 +10,7 @@
 |-----|------|---------|
 | 项目基础配置 | ✅ 完成 | 2026-03-02 |
 | uniCloud 环境配置 | ✅ 完成 | - |
+| 云数据库 Schema 设计 | ✅ 完成 | 2026-03-02 |
 
 ---
 
@@ -50,5 +51,36 @@
 - 项目需要通过 HBuilderX 进行编译和运行
 - Vue 3 使用 Composition API + `<script setup>` 语法
 - UnoCSS 需要在 vite.config.ts 或 pages.json 中配置才能生效
-- 下一步：创建数据库 Schema 和云函数
+
+---
+
+## 2026-03-02 - Task: 云数据库 Schema 设计
+
+### What was done:
+- ✅ 创建 uniCloud-aliyun/database 目录
+- ✅ 创建 users.schema.json（用户表）
+  - 字段：_id, openid, nickname, avatar, created_at, updated_at
+  - 索引：openid（唯一索引）
+  - 权限：只能读写自己的数据
+- ✅ 创建 accounts.schema.json（账户表）
+  - 字段：_id, user_id, name, type, balance, icon, sort_order, is_default, create_by, created_at, updated_at
+  - 索引：user_id
+  - 权限：支持查看系统默认账户（create_by == ''）
+- ✅ 创建 categories.schema.json（分类表）
+  - 字段：_id, user_id, name, type, icon, color, sort_order, is_default, create_by, created_at, updated_at
+  - 索引：user_id + type 复合索引
+  - 权限：支持查看系统默认分类，不能删除系统默认分类
+- ✅ 创建 transactions.schema.json（交易记录表）
+  - 字段：_id, user_id, account_id, category_id, type, amount, remark, images, transaction_date, created_at, updated_at
+  - 索引：user_id + transaction_date 复合索引, account_id, category_id
+  - 权限：只能操作自己的交易数据
+
+### Testing:
+- ✅ 所有 Schema 文件已创建并验证 JSON 格式正确
+- ⚠️ 需要在 HBuilderX 中手动上传 Schema 到 uniCloud 控制台
+
+### Notes:
+- 数据隔离设计：create_by 字段（空字符串表示系统默认数据）
+- 下一步：需要在 HBuilderX 中创建集合并上传 Schema 文件
+
 

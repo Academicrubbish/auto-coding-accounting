@@ -1,0 +1,119 @@
+{
+  "bsonType": "object",
+  "required": ["user_id", "account_id", "category_id", "type", "amount", "transaction_date"],
+  "permission": {
+    "read": "doc.user_id == auth.openid",
+    "create": "doc.user_id == auth.openid",
+    "update": "doc.user_id == auth.openid",
+    "delete": "doc.user_id == auth.openid"
+  },
+  "properties": {
+    "_id": {
+      "description": "主键"
+    },
+    "user_id": {
+      "bsonType": "string",
+      "description": "用户 openid",
+      "title": "用户ID",
+      "foreignKey": "users.openid"
+    },
+    "account_id": {
+      "bsonType": "string",
+      "description": "账户 ID",
+      "title": "账户ID",
+      "foreignKey": "accounts._id"
+    },
+    "category_id": {
+      "bsonType": "string",
+      "description": "分类 ID",
+      "title": "分类ID",
+      "foreignKey": "categories._id"
+    },
+    "type": {
+      "bsonType": "string",
+      "description": "类型",
+      "title": "类型",
+      "enum": ["expense", "income", "transfer"]
+    },
+    "amount": {
+      "bsonType": "double",
+      "description": "金额（正数）",
+      "title": "金额",
+      "minimum": 0
+    },
+    "remark": {
+      "bsonType": "string",
+      "description": "备注说明",
+      "title": "备注",
+      "maxLength": 500
+    },
+    "images": {
+      "bsonType": "array",
+      "description": "图片 URL 数组",
+      "title": "图片",
+      "arrayType": "string"
+    },
+    "transaction_date": {
+      "bsonType": "date",
+      "description": "交易日期",
+      "title": "交易日期",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    },
+    "created_at": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "title": "创建时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    },
+    "updated_at": {
+      "bsonType": "timestamp",
+      "description": "更新时间",
+      "title": "更新时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    }
+  },
+  "indexes": [
+    {
+      "IndexName": "user_date_idx",
+      "MgoKeySchema": {
+        "MgoIndexKeys": [
+          {
+            "Name": "user_id",
+            "Direction": 1
+          },
+          {
+            "Name": "transaction_date",
+            "Direction": -1
+          }
+        ],
+        "MgoIsUnique": false
+      }
+    },
+    {
+      "IndexName": "account_id_idx",
+      "MgoKeySchema": {
+        "MgoIndexKeys": [{
+          "Name": "account_id",
+          "Direction": 1
+        }],
+        "MgoIsUnique": false
+      }
+    },
+    {
+      "IndexName": "category_id_idx",
+      "MgoKeySchema": {
+        "MgoIndexKeys": [{
+          "Name": "category_id",
+          "Direction": 1
+        }],
+        "MgoIsUnique": false
+      }
+    }
+  ]
+}

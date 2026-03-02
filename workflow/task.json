@@ -43,7 +43,7 @@
         "在 Schema 中添加 createBy 字段用于数据隔离（createBy 为空字符串表示系统默认数据）",
         "在 uniCloud 控制台创建集合并上传 Schema 文件"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": 4,

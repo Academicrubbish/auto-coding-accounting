@@ -1,0 +1,95 @@
+{
+  "bsonType": "object",
+  "required": ["user_id", "name", "type"],
+  "permission": {
+    "read": "doc.user_id == auth.openid || doc.create_by == ''",
+    "create": "doc.user_id == auth.openid",
+    "update": "doc.user_id == auth.openid",
+    "delete": "doc.user_id == auth.openid && doc.create_by != ''"
+  },
+  "properties": {
+    "_id": {
+      "description": "主键"
+    },
+    "user_id": {
+      "bsonType": "string",
+      "description": "用户 openid",
+      "title": "用户ID",
+      "foreignKey": "users.openid"
+    },
+    "name": {
+      "bsonType": "string",
+      "description": "分类名称",
+      "title": "分类名称",
+      "minLength": 1,
+      "maxLength": 20
+    },
+    "type": {
+      "bsonType": "string",
+      "description": "类型",
+      "title": "类型",
+      "enum": ["expense", "income"]
+    },
+    "icon": {
+      "bsonType": "string",
+      "description": "图标（emoji 或图标名称）",
+      "title": "图标"
+    },
+    "color": {
+      "bsonType": "string",
+      "description": "颜色值，如 #FF6B6B",
+      "title": "颜色"
+    },
+    "sort_order": {
+      "bsonType": "int",
+      "description": "排序，越小越靠前",
+      "title": "排序",
+      "defaultValue": 0
+    },
+    "is_default": {
+      "bsonType": "bool",
+      "description": "是否系统默认分类",
+      "title": "系统默认",
+      "defaultValue": false
+    },
+    "create_by": {
+      "bsonType": "string",
+      "description": "创建者 openid，空字符串表示系统默认分类",
+      "title": "创建者"
+    },
+    "created_at": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "title": "创建时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    },
+    "updated_at": {
+      "bsonType": "timestamp",
+      "description": "更新时间",
+      "title": "更新时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    }
+  },
+  "indexes": [
+    {
+      "IndexName": "user_type_idx",
+      "MgoKeySchema": {
+        "MgoIndexKeys": [
+          {
+            "Name": "user_id",
+            "Direction": 1
+          },
+          {
+            "Name": "type",
+            "Direction": 1
+          }
+        ],
+        "MgoIsUnique": false
+      }
+    }
+  ]
+}
