@@ -109,7 +109,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useUserStore } from '../../store/user'
 
 const userStore = useUserStore()
@@ -140,44 +140,69 @@ const formatMoney = (val: number) => {
  * 加载用户统计数据
  */
 const loadUserStats = async () => {
-  if (isGuest.value) return
+  // 检查是否已登录
+  if (!userStore.openid) {
+    console.log('我的页面：用户未登录，跳过加载')
+    return
+  }
 
   try {
-    // 获取总资产
-    // @ts-ignore
-    const res = await uniCloud.callFunction({
-      name: 'statistics',
-      data: {
-        action: 'overview',
-        openid: userStore.openid
-      }
-    })
+    console.log('我的页面：加载统计数据，openid:', userStore.openid)
 
-    if (res.result.code === 0) {
-      const data = res.result.data
-      totalAssets.value = formatMoney(data.totalAssets || 0)
-      transactionCount.value = data.recentTransactions?.length || 0
+    // 1. 获取交易总数 - 直接查数据库
+    // @ts-ignore
+    const db = uniCloud.database()
+    const transactionCollection = db.collection('transactions')
+
+    const transRes = await transactionCollection.where({
+      user_id: userStore.openid
+    }).count()
+
+    if (transRes.result) {
+      transactionCount.value = transRes.result.total || 0
+      console.log('我的页面：交易笔数 =', transactionCount.value)
     }
 
-    // 获取账户数量
+    // 2. 获取账户数量
     // @ts-ignore
     const accRes = await uniCloud.callFunction({
       name: 'account',
       data: { action: 'list', openid: userStore.openid }
     })
     if (accRes.result.code === 0) {
-      accountCount.value = accRes.result.data?.length || 0
+      // 只计算用户自己的账户，不包括系统默认账户
+      const userAccounts = (accRes.result.data || []).filter((a: any) => a.create_by !== '')
+      accountCount.value = userAccounts.length
+      console.log('我的页面：账户数量 =', accountCount.value)
     }
 
-    // 获取分类数量
+    // 3. 获取分类数量
     // @ts-ignore
     const catRes = await uniCloud.callFunction({
       name: 'category',
       data: { action: 'list', data: {}, openid: userStore.openid }
     })
     if (catRes.result.code === 0) {
-      categoryCount.value = catRes.result.data?.length || 0
+      // 只计算用户自己的分类，不包括系统默认分类
+      const userCategories = (catRes.result.data || []).filter((c: any) => c.create_by !== '')
+      categoryCount.value = userCategories.length
+      console.log('我的页面：分类数量 =', categoryCount.value)
     }
+
+    // 4. 获取总资产
+    // @ts-ignore
+    const statsRes = await uniCloud.callFunction({
+      name: 'statistics',
+      data: {
+        action: 'overview',
+        openid: userStore.openid
+      }
+    })
+    if (statsRes.result.code === 0) {
+      totalAssets.value = formatMoney(statsRes.result.data.totalAssets || 0)
+      console.log('我的页面：总资产 =', totalAssets.value)
+    }
+
   } catch (error) {
     console.error('加载用户统计失败：', error)
   }
@@ -298,6 +323,14 @@ const handleLogout = () => {
   })
 }
 
+// 监听登录状态变化
+watch(() => userStore.openid, (newOpenid) => {
+  if (newOpenid) {
+    console.log('我的页面：检测到 openid 变化，重新加载统计')
+    loadUserStats()
+  }
+})
+
 /**
  * 页面加载
  */
@@ -307,7 +340,10 @@ onMounted(() => {
     userName.value = userStore.userData.nickname
   }
 
-  loadUserStats()
+  // 延迟加载，确保登录状态已恢复
+  setTimeout(() => {
+    loadUserStats()
+  }, 500)
 })
 
 /**
