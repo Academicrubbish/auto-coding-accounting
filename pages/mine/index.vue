@@ -1,41 +1,17 @@
 <template>
   <view class="mine-container">
-    <!-- 用户信息卡片 -->
-    <view class="user-card">
-      <view class="user-avatar">
-        <text class="avatar-text">{{ userAvatar }}</text>
-      </view>
-      <view class="user-info">
-        <text class="user-name">{{ userName }}</text>
-        <text class="user-status" v-if="isGuest">游客模式</text>
-        <text class="user-status" v-else>已登录</text>
-      </view>
-      <view class="login-btn" v-if="isGuest" @tap="goLogin">
-        <text class="login-text">去登录</text>
-      </view>
-    </view>
-
-    <!-- 统计卡片 -->
-    <view class="stats-card" v-if="!isGuest">
-      <view class="stats-item">
-        <text class="stats-value">{{ transactionCount }}</text>
-        <text class="stats-label">交易笔数</text>
-      </view>
-      <view class="stats-divider"></view>
-      <view class="stats-item">
-        <text class="stats-value">{{ accountCount }}</text>
-        <text class="stats-label">账户数量</text>
-      </view>
-      <view class="stats-divider"></view>
-      <view class="stats-item">
-        <text class="stats-value">{{ categoryCount }}</text>
-        <text class="stats-label">分类数量</text>
+    <!-- 登录引导区 - 未登录时显示 -->
+    <view class="auth-guide" v-if="isGuest">
+      <view class="guide-icon">🔐</view>
+      <text class="guide-title">登录后同步数据</text>
+      <text class="guide-desc">登录可保护您的记账数据，多设备同步</text>
+      <view class="guide-btn" @tap="goLogin">
+        <text class="guide-btn-text">立即登录</text>
       </view>
     </view>
 
     <!-- 功能列表 -->
     <view class="function-section">
-      <view class="section-title">我的账户</view>
       <view class="function-list">
         <view class="function-item" @tap="goAccountManage">
           <view class="item-left">
@@ -43,7 +19,7 @@
             <text class="item-name">账户管理</text>
           </view>
           <view class="item-right">
-            <text class="item-value">{{ totalAssets }}</text>
+            <text class="item-value" v-if="!isGuest">{{ totalAssets }}</text>
             <text class="item-arrow">›</text>
           </view>
         </view>
@@ -55,12 +31,19 @@
           </view>
           <text class="item-arrow">›</text>
         </view>
+
+        <view class="function-item" @tap="goStats">
+          <view class="item-left">
+            <text class="item-icon">📊</text>
+            <text class="item-name">统计分析</text>
+          </view>
+          <text class="item-arrow">›</text>
+        </view>
       </view>
     </view>
 
     <!-- 设置列表 -->
     <view class="function-section">
-      <view class="section-title">其他</view>
       <view class="function-list">
         <view class="function-item" @tap="goSettings">
           <view class="item-left">
@@ -78,6 +61,18 @@
           <text class="item-arrow">›</text>
         </view>
       </view>
+    </view>
+
+    <!-- 底部状态信息 -->
+    <view class="footer-status">
+      <view class="status-info">
+        <text class="status-text" v-if="isGuest">未登录</text>
+        <template v-else>
+          <text class="status-dot">●</text>
+          <text class="status-text">已登录</text>
+        </template>
+      </view>
+      <view class="version-info">记账助手 v1.0.0</view>
     </view>
 
     <!-- 关于弹窗 -->
@@ -102,26 +97,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '../../store/user'
 
 const userStore = useUserStore()
 
 // 状态
-const userName = ref('记账用户')
-const transactionCount = ref(0)
-const accountCount = ref(0)
-const categoryCount = ref(0)
 const totalAssets = ref('¥0.00')
 const showAboutPopup = ref(false)
 
 // 计算属性
 const isGuest = computed(() => userStore.isGuest)
-const userAvatar = computed(() => {
-  const name = userName.value || '记'
-  return name.substring(0, 1).toUpperCase()
-})
 
 /**
  * 格式化金额
@@ -131,80 +118,15 @@ const formatMoney = (val: number) => {
 }
 
 /**
- * 加载用户统计数据
+ * 加载用户总资产
  */
 const loadUserStats = async () => {
-  // 检查是否已登录
   if (!userStore.openid) {
-    console.log('【我的页面】用户未登录，跳过加载')
     return
   }
 
   try {
-    console.log('【我的页面】开始加载统计数据')
-    console.log('【我的页面】当前 openid:', userStore.openid)
-    console.log('【我的页面】当前 isGuest:', userStore.isGuest)
-
-    // 1. 获取交易总数 - 通过云函数
-    console.log('【我的页面】步骤1：获取交易笔数')
-    // @ts-ignore
-    const transRes = await uniCloud.callFunction({
-      name: 'transaction',
-      data: {
-        action: 'list',
-        openid: userStore.openid,
-        page: 1,
-        pageSize: 1  // 只需要获取 count，不需要实际数据
-      }
-    })
-    console.log('【我的页面】交易云函数返回:', transRes.result)
-    if (transRes.result.code === 0) {
-      transactionCount.value = transRes.result.data.total || 0
-      console.log('【我的页面】交易笔数 =', transactionCount.value)
-    } else {
-      console.log('【我的页面】交易云函数返回错误:', transRes.result.message)
-    }
-
-    // 2. 获取账户数量
-    console.log('【我的页面】步骤2：获取账户数量')
-    // @ts-ignore
-    const accRes = await uniCloud.callFunction({
-      name: 'account',
-      data: { action: 'list', openid: userStore.openid }
-    })
-    console.log('【我的页面】账户云函数返回:', accRes.result)
-    if (accRes.result.code === 0) {
-      const allAccounts = accRes.result.data || []
-      console.log('【我的页面】所有账户:', allAccounts)
-      // 只计算用户自己的账户，不包括系统默认账户
-      const userAccounts = allAccounts.filter((a: any) => a.create_by !== 'common')
-      accountCount.value = userAccounts.length
-      console.log('【我的页面】用户自建账户数量 =', accountCount.value)
-    } else {
-      console.log('【我的页面】账户云函数返回错误:', accRes.result.message)
-    }
-
-    // 3. 获取分类数量
-    console.log('【我的页面】步骤3：获取分类数量')
-    // @ts-ignore
-    const catRes = await uniCloud.callFunction({
-      name: 'category',
-      data: { action: 'list', data: {}, openid: userStore.openid }
-    })
-    console.log('【我的页面】分类云函数返回:', catRes.result)
-    if (catRes.result.code === 0) {
-      const allCategories = catRes.result.data || []
-      console.log('【我的页面】所有分类:', allCategories)
-      // 只计算用户自己的分类，不包括系统默认分类
-      const userCategories = allCategories.filter((c: any) => c.create_by !== 'common')
-      categoryCount.value = userCategories.length
-      console.log('【我的页面】用户自建分类数量 =', categoryCount.value)
-    } else {
-      console.log('【我的页面】分类云函数返回错误:', catRes.result.message)
-    }
-
-    // 4. 获取总资产
-    console.log('【我的页面】步骤4：获取总资产')
+    // 获取总资产
     // @ts-ignore
     const statsRes = await uniCloud.callFunction({
       name: 'statistics',
@@ -213,19 +135,12 @@ const loadUserStats = async () => {
         openid: userStore.openid
       }
     })
-    console.log('【我的页面】统计云函数返回:', statsRes.result)
     if (statsRes.result.code === 0) {
       const assets = statsRes.result.data.totalAssets || 0
       totalAssets.value = formatMoney(assets)
-      console.log('【我的页面】总资产原始值 =', assets)
-      console.log('【我的页面】总资产格式化后 =', totalAssets.value)
-    } else {
-      console.log('【我的页面】统计云函数返回错误:', statsRes.result.message)
     }
-
-    console.log('【我的页面】统计数据加载完成')
   } catch (error) {
-    console.error('【我的页面】加载用户统计失败：', error)
+    console.error('加载总资产失败：', error)
   }
 }
 
@@ -276,42 +191,30 @@ const goCategoryManage = () => {
 }
 
 /**
+ * 跳转统计分析
+ */
+const goStats = () => {
+  if (isGuest.value) {
+    // @ts-ignore
+    uni.showToast({
+      title: '请先登录',
+      icon: 'none'
+    })
+    return
+  }
+  // @ts-ignore
+  uni.navigateTo({
+    url: '/pages/stats/index'
+  })
+}
+
+/**
  * 跳转设置页面
  */
 const goSettings = () => {
   // @ts-ignore
   uni.navigateTo({
     url: '/pages/settings/index'
-  })
-}
-
-/**
- * 清除缓存
- */
-const clearCache = () => {
-  // @ts-ignore
-  uni.showModal({
-    title: '提示',
-    content: '确定要清除缓存吗？',
-    success: (res: any) => {
-      if (res.confirm) {
-        try {
-          // @ts-ignore
-          uni.clearStorageSync()
-          // @ts-ignore
-          uni.showToast({
-            title: '缓存已清除',
-            icon: 'success'
-          })
-        } catch (error) {
-          // @ts-ignore
-          uni.showToast({
-            title: '清除失败',
-            icon: 'none'
-          })
-        }
-      }
-    }
   })
 }
 
@@ -323,55 +226,9 @@ const showAbout = () => {
 }
 
 /**
- * 退出登录
- */
-const handleLogout = () => {
-  // @ts-ignore
-  uni.showModal({
-    title: '退出登录',
-    content: '确定要退出登录吗？退出后可以继续使用游客模式浏览',
-    success: (res: any) => {
-      if (res.confirm) {
-        // 清除登录状态
-        const { clearAuthCache } = require('@/utils/auth-cache')
-        clearAuthCache()
-
-        // @ts-ignore
-        uni.showToast({
-          title: '已退出登录',
-          icon: 'success'
-        })
-
-        // 重载页面
-        setTimeout(() => {
-          // @ts-ignore
-          uni.reLaunch({
-            url: '/pages/index/index'
-          })
-        }, 500)
-      }
-    }
-  })
-}
-
-// 监听登录状态变化
-watch(() => userStore.openid, (newOpenid) => {
-  if (newOpenid) {
-    console.log('我的页面：检测到 openid 变化，重新加载统计')
-    loadUserStats()
-  }
-})
-
-/**
  * 页面加载
  */
 onMounted(() => {
-  // 更新用户名
-  if (userStore.userData?.nickname) {
-    userName.value = userStore.userData.nickname
-  }
-
-  // 延迟加载，确保登录状态已恢复
   setTimeout(() => {
     loadUserStats()
   }, 500)
@@ -387,119 +244,61 @@ onShow(() => {
 .mine-container {
   min-height: 100vh;
   background: #f5f5f5;
-  padding-bottom: 40rpx;
+  padding: 30rpx 20rpx 60rpx
 }
 
-/* 用户卡片 */
-.user-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+/* 登录引导区 */
+.auth-guide {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  margin: 30rpx;
+  border-radius: 24rpx;
   padding: 60rpx 40rpx;
   display: flex;
-  align-items: center;
-  gap: 30rpx;
-  margin-bottom: 20rpx;
-}
-
-.user-avatar {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 60rpx;
-  background: rgba(255, 255, 255, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 4rpx solid rgba(255, 255, 255, 0.5);
-}
-
-.avatar-text {
-  font-size: 50rpx;
-  font-weight: bold;
-  color: #ffffff;
-}
-
-.user-info {
-  flex: 1;
-  display: flex;
   flex-direction: column;
-  gap: 10rpx;
+  align-items: center;
+  gap: 20rpx;
+  text-align: center;
 }
 
-.user-name {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #ffffff;
+.guide-icon {
+  font-size: 80rpx;
+  opacity: 0.8;
 }
 
-.user-status {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.8);
-  padding: 4rpx 16rpx;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 20rpx;
-  width: fit-content;
-}
-
-.login-btn {
-  padding: 16rpx 32rpx;
-  background: #ffffff;
-  border-radius: 30rpx;
-}
-
-.login-text {
-  font-size: 26rpx;
-  color: #667eea;
+.guide-title {
+  font-size: 32rpx;
   font-weight: 500;
-}
-
-/* 统计卡片 */
-.stats-card {
-  background: #ffffff;
-  margin: 0 30rpx 20rpx;
-  border-radius: 20rpx;
-  display: flex;
-  padding: 40rpx 0;
-}
-
-.stats-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10rpx;
-}
-
-.stats-value {
-  font-size: 40rpx;
-  font-weight: bold;
   color: #333333;
 }
 
-.stats-label {
-  font-size: 24rpx;
-  color: #999999;
+.guide-desc {
+  font-size: 26rpx;
+  color: #888888;
+  line-height: 1.6;
 }
 
-.stats-divider {
-  width: 1rpx;
-  background: #f0f0f0;
+.guide-btn {
+  margin-top: 10rpx;
+  padding: 20rpx 60rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 40rpx;
+}
+
+.guide-btn-text {
+  font-size: 28rpx;
+  color: #ffffff;
+  font-weight: 500;
 }
 
 /* 功能区域 */
 .function-section {
   background: #ffffff;
-  margin: 0 30rpx 20rpx;
   border-radius: 20rpx;
   overflow: hidden;
 }
 
-.section-title {
-  padding: 30rpx 30rpx 20rpx;
-  font-size: 28rpx;
-  color: #999999;
-}
-
 .function-list {
-  padding: 0 30rpx;
+  padding: 0 10rpx;
 }
 
 .function-item {
@@ -539,7 +338,8 @@ onShow(() => {
 .item-right {
   display: flex;
   align-items: center;
-  gap: 10rpx;
+  gap: 8rpx;
+  margin-right: -5rpx;
 }
 
 .item-value {
@@ -550,27 +350,37 @@ onShow(() => {
 .item-arrow {
   font-size: 40rpx;
   color: #cccccc;
+  flex-shrink: 0;
 }
 
-/* 退出登录 */
-.logout-section {
-  padding: 0 30rpx;
+/* 底部状态信息 */
+.footer-status {
+  margin-top: 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
 }
 
-.logout-btn {
-  width: 100%;
-  height: 80rpx;
-  background: #ffffff;
-  border-radius: 20rpx;
+.status-info {
   display: flex;
   align-items: center;
-  justify-content: center;
-  border: none;
+  gap: 6rpx;
 }
 
-.logout-text {
-  font-size: 30rpx;
-  color: #ff6b6b;
+.status-dot {
+  font-size: 20rpx;
+  color: #52c41a;
+}
+
+.status-text {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+.version-info {
+  font-size: 24rpx;
+  color: #bbbbbb;
 }
 
 /* 关于弹窗 */
