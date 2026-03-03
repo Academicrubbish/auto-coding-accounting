@@ -103,6 +103,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '../../store/user'
 
 const userStore = useUserStore()
@@ -376,16 +377,9 @@ onMounted(() => {
   }, 500)
 })
 
-/**
- * 页面显示时刷新
- */
-// @ts-ignore
-const onShow = () => {
+// 页面显示时刷新
+onShow(() => {
   loadUserStats()
-}
-
-defineExpose({
-  onShow
 })
 </script>
 

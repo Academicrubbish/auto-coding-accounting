@@ -59,15 +59,23 @@
       </view>
 
       <!-- 日期选择 -->
-      <view class="form-item" @tap="showDatePicker = true">
+      <view class="form-item date-item">
         <view class="form-label">
           <text class="label-icon">📅</text>
           <text class="label-text">日期</text>
         </view>
-        <view class="form-value">
-          <text class="value-text">{{ formatDateDisplay(transactionDate) }}</text>
-          <text class="value-arrow">›</text>
-        </view>
+        <!-- @ts-ignore -->
+        <uni-datetime-picker
+          type="date"
+          v-model="transactionDate"
+          :border="false"
+          :clear-icon="false"
+        >
+          <view class="form-value">
+            <text class="value-text">{{ formatDateDisplay(transactionDate) }}</text>
+            <text class="value-arrow">›</text>
+          </view>
+        </uni-datetime-picker>
       </view>
 
       <!-- 备注输入 -->
@@ -146,37 +154,6 @@
         </scroll-view>
       </view>
     </view>
-
-    <!-- 日期选择弹窗 -->
-    <view class="picker-mask" v-if="showDatePicker" @tap="showDatePicker = false">
-      <view class="picker-content small-content" @tap.stop>
-        <view class="picker-header">
-          <text class="picker-title">选择日期</text>
-          <text class="picker-close" @tap="showDatePicker = false">✕</text>
-        </view>
-        <!-- @ts-ignore -->
-        <picker-view class="date-picker" :value="datePickerValue" @change="onDateChange">
-          <picker-view-column>
-            <view v-for="(item, index) in years" :key="index" class="picker-item">
-              {{ item }}年
-            </view>
-          </picker-view-column>
-          <picker-view-column>
-            <view v-for="(item, index) in months" :key="index" class="picker-item">
-              {{ item }}月
-            </view>
-          </picker-view-column>
-          <picker-view-column>
-            <view v-for="(item, index) in days" :key="index" class="picker-item">
-              {{ item }}日
-            </view>
-          </picker-view-column>
-        </picker-view>
-        <view class="date-actions">
-          <button class="date-btn" @tap="confirmDate">确定</button>
-        </view>
-      </view>
-    </view>
   </view>
 </template>
 
@@ -200,32 +177,18 @@ const selectedCategoryIcon = ref('📁')
 const selectedAccountId = ref('')
 const selectedAccountName = ref('')
 const remark = ref('')
-const transactionDate = ref(new Date())
+// 日期 - 默认今天
+const today = new Date()
+const transactionDate = ref(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`)
 const isSubmitting = ref(false)
 
 // 弹窗状态
 const showCategoryPicker = ref(false)
 const showAccountPicker = ref(false)
-const showDatePicker = ref(false)
 
 // 数据列表
 const categories = ref<any[]>([])
 const accounts = ref<any[]>([])
-
-// 日期选择器
-const years = computed(() => {
-  const currentYear = new Date().getFullYear()
-  return Array.from({ length: 10 }, (_, i) => currentYear - 5 + i)
-})
-const months = computed(() => Array.from({ length: 12 }, (_, i) => i + 1))
-const days = computed(() => {
-  const year = datePickerValue.value[0]
-  const month = datePickerValue.value[1]
-  const daysInMonth = new Date(year, month, 0).getDate()
-  return Array.from({ length: daysInMonth }, (_, i) => i + 1)
-})
-
-const datePickerValue = ref([years.value[5], new Date().getMonth() + 1, new Date().getDate()])
 
 /**
  * 格式化金额
@@ -237,11 +200,9 @@ const formatMoney = (val: number) => {
 /**
  * 格式化日期显示
  */
-const formatDateDisplay = (date: Date) => {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
+const formatDateDisplay = (date: string) => {
+  if (!date) return '请选择'
+  return date
 }
 
 /**
@@ -340,22 +301,6 @@ const selectAccount = (item: any) => {
   selectedAccountId.value = item._id
   selectedAccountName.value = item.name
   showAccountPicker.value = false
-}
-
-/**
- * 日期变化
- */
-const onDateChange = (e: any) => {
-  datePickerValue.value = e.detail.value
-}
-
-/**
- * 确认日期
- */
-const confirmDate = () => {
-  const [year, month, day] = datePickerValue.value
-  transactionDate.value = new Date(year, month - 1, day)
-  showDatePicker.value = false
 }
 
 /**
@@ -737,30 +682,20 @@ onMounted(() => {
   color: #667eea;
 }
 
-/* 日期选择器 */
-.date-picker {
-  height: 400rpx;
+/* 日期选择项 */
+.date-item {
+  position: relative;
 }
 
-.picker-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 80rpx;
+.date-item ::v-deep .uni-date-editor {
+  flex: 1;
 }
 
-.date-actions {
-  padding: 20rpx 30rpx;
-  border-top: 1rpx solid #f0f0f0;
+.date-item ::v-deep .uni-date-x {
+  justify-content: flex-end;
 }
 
-.date-btn {
-  width: 100%;
-  height: 80rpx;
-  background: #667eea;
-  color: #ffffff;
-  border-radius: 40rpx;
-  font-size: 30rpx;
-  border: none;
+.date-item ::v-deep .uni-date__x-input {
+  text-align: right;
 }
 </style>

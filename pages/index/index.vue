@@ -1,52 +1,89 @@
 <template>
   <view class="home-container">
-    <!-- 顶部总资产卡片 -->
-    <view class="asset-card">
-      <view class="asset-header">
-        <text class="asset-label">总资产</text>
-        <text class="asset-value">¥{{ formatMoney(totalAssets) }}</text>
-      </view>
-      <view class="asset-detail">
-        <view class="detail-item">
-          <text class="detail-label">本月收入</text>
-          <text class="detail-value income">+¥{{ formatMoney(monthIncome) }}</text>
+    <!-- 使用 z-paging 组件 -->
+    <z-paging
+      ref="pagingRef"
+      v-model="transactions"
+      @query="queryList"
+      :default-page-size="20"
+      :use-page-scroll="false"
+    >
+      <!-- 顶部内容插槽 -->
+      <view slot="top">
+        <!-- 顶部总资产卡片 -->
+        <view class="asset-card">
+          <view class="asset-header">
+            <text class="asset-label">总资产</text>
+            <text class="asset-value">¥{{ formatMoney(totalAssets) }}</text>
+          </view>
+          <view class="asset-detail">
+            <view class="detail-item">
+              <text class="detail-label">本月收入</text>
+              <text class="detail-value income">+¥{{ formatMoney(monthIncome) }}</text>
+            </view>
+            <view class="detail-item">
+              <text class="detail-label">本月支出</text>
+              <text class="detail-value expense">-¥{{ formatMoney(monthExpense) }}</text>
+            </view>
+          </view>
         </view>
-        <view class="detail-item">
-          <text class="detail-label">本月支出</text>
-          <text class="detail-value expense">-¥{{ formatMoney(monthExpense) }}</text>
+
+        <!-- 快捷记账按钮 -->
+        <view class="quick-actions">
+          <button class="action-btn expense-btn" @tap="goRecord('expense')">
+            <text class="action-icon">💸</text>
+            <text class="action-text">记支出</text>
+          </button>
+          <button class="action-btn income-btn" @tap="goRecord('income')">
+            <text class="action-icon">💰</text>
+            <text class="action-text">记收入</text>
+          </button>
+        </view>
+
+        <!-- 近期交易标题 -->
+        <view class="recent-header">
+          <text class="section-title">近期交易</text>
+          <text class="section-more" @tap="goList">查看全部</text>
         </view>
       </view>
-    </view>
 
-    <!-- 快捷记账按钮 -->
-    <view class="quick-actions">
-      <button class="action-btn expense-btn" @tap="goRecord('expense')">
-        <text class="action-icon">💸</text>
-        <text class="action-text">记支出</text>
-      </button>
-      <button class="action-btn income-btn" @tap="goRecord('income')">
-        <text class="action-icon">💰</text>
-        <text class="action-text">记收入</text>
-      </button>
-    </view>
-
-    <!-- 近期交易 -->
-    <view class="recent-section">
-      <view class="section-header">
-        <text class="section-title">近期交易</text>
-        <text class="section-more" @tap="goList">查看全部</text>
+      <!-- 自定义空状态/错误状态 -->
+      <view slot="empty" slot-scope="{ isLoadFailed: slotIsLoadFailed }">
+        <!-- 未登录状态 -->
+        <view v-if="!isLoggedIn" class="custom-empty-container">
+          <text class="empty-icon">🔐</text>
+          <text class="empty-title">请先登录</text>
+          <text class="empty-desc">登录后即可查看交易记录</text>
+          <button class="empty-btn" @tap="goLogin">立即登录</button>
+        </view>
+        <!-- 加载失败状态 -->
+        <view v-else-if="slotIsLoadFailed || isLoadFailed" class="custom-empty-container">
+          <text class="empty-icon">⚠️</text>
+          <text class="empty-title">加载失败</text>
+          <text class="empty-desc">请稍后重试</text>
+          <button class="empty-btn" @tap="reloadData">重新加载</button>
+        </view>
+        <!-- 空数据状态 -->
+        <view v-else class="custom-empty-container">
+          <text class="empty-icon">📊</text>
+          <text class="empty-title">暂无交易记录</text>
+          <text class="empty-desc">点击上方按钮开始记账</text>
+          <button class="empty-btn" @tap="goRecord('expense')">记一笔</button>
+        </view>
       </view>
-      <view class="transaction-list" v-if="recentTransactions.length > 0">
+
+      <!-- 交易列表 -->
+      <view class="transaction-list">
         <view
           class="transaction-item"
-          v-for="item in recentTransactions"
+          v-for="item in transactions"
           :key="item._id"
           @tap="goDetail(item._id)"
         >
           <view class="item-left">
-            <text class="item-icon">{{ item.categoryIcon || '📝' }}</text>
+            <text class="item-icon">{{ getCategoryIcon(item) }}</text>
             <view class="item-info">
-              <text class="item-category">{{ item.categoryName || '未分类' }}</text>
+              <text class="item-category">{{ getCategoryName(item) }}</text>
               <text class="item-date">{{ formatDate(item.transaction_date) }}</text>
             </view>
           </view>
@@ -60,27 +97,30 @@
           </view>
         </view>
       </view>
-      <view class="empty-state" v-else>
-        <text class="empty-icon">📊</text>
-        <text class="empty-text">暂无交易记录</text>
-        <text class="empty-hint">点击上方按钮开始记账</text>
-      </view>
-    </view>
+    </z-paging>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '../../store/user'
 
 const userStore = useUserStore()
+
+// z-paging ref
+const pagingRef = ref()
 
 // 状态数据
 const totalAssets = ref(0)
 const monthIncome = ref(0)
 const monthExpense = ref(0)
-const recentTransactions = ref<any[]>([])
-const isLoading = ref(false)
+const transactions = ref<any[]>([])
+const isLoadingStats = ref(false)
+const isLoadFailed = ref(false)
+
+// 是否已登录
+const isLoggedIn = computed(() => !!userStore.openid)
 
 /**
  * 格式化金额
@@ -93,10 +133,9 @@ const formatMoney = (amount: number) => {
 /**
  * 格式化日期
  */
-const formatDate = (dateStr: string) => {
+const formatDate = (dateStr: any) => {
   let date: Date
   if (dateStr && typeof dateStr === 'object' && dateStr.$date) {
-    // uniCloud Date 格式
     date = new Date(dateStr.$date)
   } else {
     date = new Date(dateStr)
@@ -107,20 +146,34 @@ const formatDate = (dateStr: string) => {
 }
 
 /**
+ * 获取分类图标
+ */
+const getCategoryIcon = (item: any) => {
+  return item.categoryIcon || (item.type === 'income' ? '💰' : '💸')
+}
+
+/**
+ * 获取分类名称
+ */
+const getCategoryName = (item: any) => {
+  return item.categoryName || item.remark || '未分类'
+}
+
+/**
  * 获取首页统计数据
  */
-const loadHomeData = async () => {
+const loadStatsData = async () => {
   // 检查是否已登录
   if (!userStore.openid) {
-    console.log('用户未登录，跳过加载')
+    console.log('用户未登录，跳过加载统计数据')
     return
   }
 
-  if (isLoading.value) return
-  isLoading.value = true
+  if (isLoadingStats.value) return
+  isLoadingStats.value = true
 
   try {
-    console.log('加载首页数据，openid:', userStore.openid)
+    console.log('加载首页统计数据，openid:', userStore.openid)
 
     // @ts-ignore
     const res = await uniCloud.callFunction({
@@ -131,29 +184,93 @@ const loadHomeData = async () => {
       }
     })
 
-    console.log('首页数据返回:', res.result)
+    console.log('首页统计数据返回:', res.result)
 
     if (res.result.code === 0) {
       const data = res.result.data
       totalAssets.value = data.totalAssets || 0
       monthIncome.value = data.monthIncome || 0
       monthExpense.value = data.monthExpense || 0
-      recentTransactions.value = (data.recentTransactions || []).map((t: any) => {
-        return {
-          ...t,
-          categoryIcon: t.categoryIcon || (t.type === 'income' ? '💰' : '💸'),
-          categoryName: t.categoryName || t.remark || '交易'
-        }
-      })
-      console.log('近期交易数据:', recentTransactions.value)
     } else {
-      console.error('加载首页数据失败：', res.result.message)
+      console.error('加载首页统计数据失败：', res.result.message)
     }
   } catch (error) {
-    console.error('加载首页数据失败：', error)
+    console.error('加载首页统计数据失败：', error)
   } finally {
-    isLoading.value = false
+    isLoadingStats.value = false
   }
+}
+
+/**
+ * z-paging 分页查询交易列表
+ */
+const queryList = async (pageNo: number, pageSize: number) => {
+  console.log('===== 首页 queryList 开始 =====')
+  console.log('pageNo:', pageNo, 'pageSize:', pageSize)
+  console.log('openid:', userStore.openid)
+  console.log('是否已登录:', isLoggedIn.value)
+
+  // 如果未登录，完成加载（显示未登录状态）
+  if (!isLoggedIn.value) {
+    pagingRef.value?.complete([])
+    return
+  }
+
+  // 如果是第一页，同时加载统计数据
+  if (pageNo === 1) {
+    loadStatsData()
+  }
+
+  try {
+    // @ts-ignore
+    const res = await uniCloud.callFunction({
+      name: 'transaction',
+      data: {
+        action: 'list',
+        openid: userStore.openid,
+        data: {
+          page: pageNo,
+          pageSize: pageSize
+        }
+      }
+    })
+
+    console.log('云函数返回完整结果:', res.result)
+
+    if (res.result.code === 0) {
+      const result = res.result.data
+      console.log('result.list:', result.list)
+      // 将结果传给 z-paging
+      pagingRef.value?.complete(result.list || [])
+      isLoadFailed.value = false
+    } else {
+      console.error('云函数返回错误:', res.result.message)
+      pagingRef.value?.complete(false)
+      isLoadFailed.value = true
+    }
+  } catch (error) {
+    console.error('加载交易列表失败：', error)
+    pagingRef.value?.complete(false)
+    isLoadFailed.value = true
+  }
+}
+
+/**
+ * 重新加载数据
+ */
+const reloadData = () => {
+  isLoadFailed.value = false
+  pagingRef.value?.reload()
+}
+
+/**
+ * 跳转登录页面
+ */
+const goLogin = () => {
+  // @ts-ignore
+  uni.navigateTo({
+    url: '/pages/login/index'
+  })
 }
 
 /**
@@ -186,18 +303,11 @@ const goDetail = (id: string) => {
   })
 }
 
-/**
- * 页面显示时刷新数据
- */
-const onShow = () => {
-  loadHomeData()
-}
-
 // 监听登录状态变化
 watch(() => userStore.openid, (newOpenid) => {
   if (newOpenid) {
     console.log('检测到 openid 变化，重新加载数据')
-    loadHomeData()
+    pagingRef.value?.reload()
   }
 })
 
@@ -205,13 +315,20 @@ watch(() => userStore.openid, (newOpenid) => {
 onMounted(() => {
   // 延迟加载，确保登录状态已恢复
   setTimeout(() => {
-    loadHomeData()
+    if (userStore.openid) {
+      loadStatsData()
+    }
   }, 500)
 })
 
-// 暴露 onShow 供 uni-app 调用
-defineExpose({
-  onShow
+// 页面显示时刷新数据
+onShow(() => {
+  console.log('首页 onShow 触发')
+  // 刷新统计数据和交易列表
+  if (userStore.openid) {
+    loadStatsData()
+    pagingRef.value?.reload()
+  }
 })
 </script>
 
@@ -226,7 +343,6 @@ defineExpose({
 .asset-card {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 60rpx 40rpx 40rpx;
-  margin-bottom: 20rpx;
 }
 
 .asset-header {
@@ -275,7 +391,7 @@ defineExpose({
 .quick-actions {
   display: flex;
   gap: 20rpx;
-  padding: 0 30rpx 30rpx;
+  padding: 30rpx;
 }
 
 .action-btn {
@@ -309,20 +425,14 @@ defineExpose({
   font-weight: 500;
 }
 
-/* 近期交易 */
-.recent-section {
-  background: #ffffff;
-  margin: 0 30rpx;
-  border-radius: 20rpx;
-  overflow: hidden;
-}
-
-.section-header {
+/* 近期交易标题 */
+.recent-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 30rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  padding: 20rpx 30rpx;
+  background: #ffffff;
+  border-top: 1rpx solid #f0f0f0;
 }
 
 .section-title {
@@ -336,15 +446,18 @@ defineExpose({
   color: #999999;
 }
 
+/* 交易列表 */
 .transaction-list {
-  padding: 0 30rpx;
+  background: #ffffff;
+  margin: 0 30rpx 30rpx;
+  border-radius: 0 0 20rpx 20rpx;
 }
 
 .transaction-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 30rpx 0;
+  padding: 30rpx;
   border-bottom: 1rpx solid #f5f5f5;
 }
 
@@ -398,27 +511,38 @@ defineExpose({
   color: #333333;
 }
 
-/* 空状态 */
-.empty-state {
+/* 自定义空状态容器 */
+.custom-empty-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80rpx 0;
+  justify-content: center;
+  padding: 120rpx 60rpx;
 }
 
 .empty-icon {
-  font-size: 80rpx;
-  margin-bottom: 20rpx;
+  font-size: 100rpx;
+  margin-bottom: 30rpx;
 }
 
-.empty-text {
-  font-size: 28rpx;
+.empty-title {
+  font-size: 32rpx;
+  color: #333333;
+  margin-bottom: 15rpx;
+}
+
+.empty-desc {
+  font-size: 26rpx;
   color: #999999;
-  margin-bottom: 10rpx;
+  margin-bottom: 50rpx;
 }
 
-.empty-hint {
-  font-size: 24rpx;
-  color: #cccccc;
+.empty-btn {
+  padding: 20rpx 60rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  border-radius: 50rpx;
+  font-size: 28rpx;
+  border: none;
 }
 </style>

@@ -13,7 +13,7 @@
       @emptyViewClick="goRecord"
     >
       <!-- 顶部筛选栏插槽 -->
-      <template #top>
+      <view slot="top">
         <view class="filter-bar">
           <view class="filter-item" @tap="showFilterPopup = true">
             <text class="filter-icon">🔍</text>
@@ -24,7 +24,32 @@
             <text class="clear-btn" @tap="clearFilters">清除</text>
           </view>
         </view>
-      </template>
+      </view>
+
+      <!-- 自定义空状态/错误状态 -->
+      <view slot="empty" slot-scope="{ isLoadFailed: slotIsLoadFailed }">
+        <!-- 未登录状态 -->
+        <view v-if="!isLoggedIn" class="custom-empty-container">
+          <text class="empty-icon">🔐</text>
+          <text class="empty-title">请先登录</text>
+          <text class="empty-desc">登录后即可查看交易记录</text>
+          <button class="empty-btn" @tap="goLogin">立即登录</button>
+        </view>
+        <!-- 加载失败状态 -->
+        <view v-else-if="slotIsLoadFailed || isLoadFailed" class="custom-empty-container">
+          <text class="empty-icon">⚠️</text>
+          <text class="empty-title">加载失败</text>
+          <text class="empty-desc">请稍后重试</text>
+          <button class="empty-btn" @tap="reloadData">重新加载</button>
+        </view>
+        <!-- 空数据状态 -->
+        <view v-else class="custom-empty-container">
+          <text class="empty-icon">📊</text>
+          <text class="empty-title">暂无交易记录</text>
+          <text class="empty-desc">开始记录您的第一笔交易吧</text>
+          <button class="empty-btn" @tap="goRecord">记一笔</button>
+        </view>
+      </view>
 
       <!-- 分组列表 -->
       <view class="grouped-list" v-if="groupedTransactions.length > 0">
@@ -113,13 +138,19 @@
         <view class="filter-section">
           <text class="section-label">日期范围</text>
           <view class="date-range">
-            <view class="date-input" @tap="showStartDatePicker = true">
-              <text class="date-text">{{ filters.start_date || '开始日期' }}</text>
-            </view>
+            <!-- @ts-ignore -->
+            <uni-datetime-picker type="date" v-model="filters.start_date" :border="false">
+              <view class="date-input">
+                <text class="date-text">{{ filters.start_date || '开始日期' }}</text>
+              </view>
+            </uni-datetime-picker>
             <text class="date-separator">至</text>
-            <view class="date-input" @tap="showEndDatePicker = true">
-              <text class="date-text">{{ filters.end_date || '结束日期' }}</text>
-            </view>
+            <!-- @ts-ignore -->
+            <uni-datetime-picker type="date" v-model="filters.end_date" :border="false">
+              <view class="date-input">
+                <text class="date-text">{{ filters.end_date || '结束日期' }}</text>
+              </view>
+            </uni-datetime-picker>
           </view>
         </view>
 
@@ -206,42 +237,12 @@
         </scroll-view>
       </view>
     </view>
-
-    <!-- 日期选择器 -->
-    <view class="picker-mask" v-if="showStartDatePicker || showEndDatePicker" @tap="closeDatePicker">
-      <view class="picker-content small-content" @tap.stop>
-        <view class="picker-header">
-          <text class="picker-title">{{ showStartDatePicker ? '选择开始日期' : '选择结束日期' }}</text>
-          <text class="picker-close" @tap="closeDatePicker">✕</text>
-        </view>
-        <!-- @ts-ignore -->
-        <picker-view class="date-picker" :value="datePickerValue" @change="onDateChange">
-          <picker-view-column>
-            <view v-for="(item, index) in years" :key="index" class="picker-item">
-              {{ item }}年
-            </view>
-          </picker-view-column>
-          <picker-view-column>
-            <view v-for="(item, index) in months" :key="index" class="picker-item">
-              {{ item }}月
-            </view>
-          </picker-view-column>
-          <picker-view-column>
-            <view v-for="(item, index) in days" :key="index" class="picker-item">
-              {{ item }}日
-            </view>
-          </picker-view-column>
-        </picker-view>
-        <view class="date-actions">
-          <button class="date-btn" @tap="confirmDate">确定</button>
-        </view>
-      </view>
-    </view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '../../store/user'
 
 const userStore = useUserStore()
@@ -251,9 +252,13 @@ const pagingRef = ref()
 
 // 状态
 const transactions = ref<any[]>([])
+const isLoadFailed = ref(false)
 
 // 分页
 const pageSize = 20
+
+// 是否已登录
+const isLoggedIn = computed(() => !!userStore.openid)
 
 // 筛选
 const showFilterPopup = ref(false)
@@ -268,28 +273,12 @@ const filters = ref({
 // 选择器状态
 const showCategoryPicker = ref(false)
 const showAccountPicker = ref(false)
-const showStartDatePicker = ref(false)
-const showEndDatePicker = ref(false)
 
 // 筛选选项数据
 const filterCategories = ref<any[]>([])
 const filterAccounts = ref<any[]>([])
 const selectedCategoryName = ref('')
 const selectedAccountName = ref('')
-
-// 日期选择器
-const years = computed(() => {
-  const currentYear = new Date().getFullYear()
-  return Array.from({ length: 10 }, (_, i) => currentYear - 5 + i)
-})
-const months = computed(() => Array.from({ length: 12 }, (_, i) => i + 1))
-const days = computed(() => {
-  const year = datePickerValue.value[0]
-  const month = datePickerValue.value[1]
-  const daysInMonth = new Date(year, month, 0).getDate()
-  return Array.from({ length: daysInMonth }, (_, i) => i + 1)
-})
-const datePickerValue = ref([years.value[5], new Date().getMonth() + 1, new Date().getDate()])
 
 /**
  * 是否有激活的筛选
@@ -427,7 +416,13 @@ const queryList = async (pageNo: number, pageSize: number) => {
   console.log('===== queryList 开始 =====')
   console.log('pageNo:', pageNo, 'pageSize:', pageSize)
   console.log('openid:', userStore.openid)
-  console.log('调用云函数名称: transaction')
+  console.log('是否已登录:', isLoggedIn.value)
+
+  // 如果未登录，完成加载（显示未登录状态）
+  if (!isLoggedIn.value) {
+    pagingRef.value?.complete([])
+    return
+  }
 
   try {
     const functionName = 'transaction'
@@ -456,16 +451,37 @@ const queryList = async (pageNo: number, pageSize: number) => {
       console.log('result.list 长度:', result.list?.length)
       // 将结果传给 z-paging，它会自动处理分页和数据拼接
       pagingRef.value?.complete(result.list || [])
+      isLoadFailed.value = false
     } else {
       console.error('云函数返回错误:', res.result.message)
       // 请求失败，传递 false 告知 z-paging
       pagingRef.value?.complete(false)
+      isLoadFailed.value = true
     }
   } catch (error) {
     console.error('加载交易列表失败：', error)
     // 请求失败，传递 false 告知 z-paging
     pagingRef.value?.complete(false)
+    isLoadFailed.value = true
   }
+}
+
+/**
+ * 重新加载数据
+ */
+const reloadData = () => {
+  isLoadFailed.value = false
+  pagingRef.value?.reload()
+}
+
+/**
+ * 跳转登录页面
+ */
+const goLogin = () => {
+  // @ts-ignore
+  uni.navigateTo({
+    url: '/pages/login/index'
+  })
 }
 
 /**
@@ -550,37 +566,6 @@ const selectAccount = (id: string) => {
 }
 
 /**
- * 日期变化
- */
-const onDateChange = (e: any) => {
-  datePickerValue.value = e.detail.value
-}
-
-/**
- * 确认日期
- */
-const confirmDate = () => {
-  const [year, month, day] = datePickerValue.value
-  const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-
-  if (showStartDatePicker.value) {
-    filters.value.start_date = dateStr
-    showStartDatePicker.value = false
-  } else if (showEndDatePicker.value) {
-    filters.value.end_date = dateStr
-    showEndDatePicker.value = false
-  }
-}
-
-/**
- * 关闭日期选择器
- */
-const closeDatePicker = () => {
-  showStartDatePicker.value = false
-  showEndDatePicker.value = false
-}
-
-/**
  * 加载筛选选项
  */
 const loadFilterOptions = async () => {
@@ -620,17 +605,11 @@ onMounted(() => {
   loadFilterOptions()
 })
 
-/**
- * 页面显示时刷新数据
- */
-const onShow = () => {
+// 页面显示时刷新数据
+onShow(() => {
+  console.log('交易列表 onShow 触发')
   // 刷新列表
   pagingRef.value?.reload()
-}
-
-// 暴露 onShow 供 uni-app 调用
-defineExpose({
-  onShow
 })
 </script>
 
@@ -959,10 +938,6 @@ defineExpose({
   overflow: hidden;
 }
 
-.small-content {
-  max-height: 40vh;
-}
-
 .picker-title {
   font-size: 30rpx;
   font-weight: bold;
@@ -999,29 +974,52 @@ defineExpose({
   color: #333333;
 }
 
-.date-picker {
-  height: 350rpx;
-}
-
-.picker-item {
+/* 日期输入样式 */
+.date-range {
   display: flex;
   align-items: center;
+  gap: 15rpx;
+}
+
+.date-range ::v-deep .uni-date-editor {
+  flex: 1;
+}
+
+.date-range ::v-deep .uni-date-x {
   justify-content: center;
-  height: 70rpx;
-  font-size: 28rpx;
 }
 
-.date-actions {
-  padding: 20rpx 30rpx;
-  border-top: 1rpx solid #f0f0f0;
+/* 自定义空状态容器 */
+.custom-empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 60rpx;
 }
 
-.date-btn {
-  width: 100%;
-  height: 70rpx;
-  background: #667eea;
+.empty-icon {
+  font-size: 100rpx;
+  margin-bottom: 30rpx;
+}
+
+.empty-title {
+  font-size: 32rpx;
+  color: #333333;
+  margin-bottom: 15rpx;
+}
+
+.empty-desc {
+  font-size: 26rpx;
+  color: #999999;
+  margin-bottom: 50rpx;
+}
+
+.empty-btn {
+  padding: 20rpx 60rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #ffffff;
-  border-radius: 35rpx;
+  border-radius: 50rpx;
   font-size: 28rpx;
   border: none;
 }
