@@ -1,21 +1,15 @@
 {
   "bsonType": "object",
-  "required": ["user_id", "name", "type"],
+  "required": ["name", "type", "create_by"],
   "permission": {
-    "read": "doc.user_id == auth.openid || doc.create_by == ''",
-    "create": "doc.user_id == auth.openid",
-    "update": "doc.user_id == auth.openid",
-    "delete": "doc.user_id == auth.openid && doc.create_by != ''"
+    "read": "doc.create_by == auth.openid || doc.create_by == 'common'",
+    "create": "doc.create_by == auth.openid",
+    "update": "doc.create_by == auth.openid",
+    "delete": "doc.create_by == auth.openid && doc.create_by != 'common'"
   },
   "properties": {
     "_id": {
       "description": "主键"
-    },
-    "user_id": {
-      "bsonType": "string",
-      "description": "用户 openid",
-      "title": "用户ID",
-      "foreignKey": "users.openid"
     },
     "name": {
       "bsonType": "string",
@@ -54,7 +48,7 @@
     },
     "create_by": {
       "bsonType": "string",
-      "description": "创建者 openid，空字符串表示系统默认分类",
+      "description": "创建者：'common' 表示公共分类，用户 openid 表示用户自定义分类",
       "title": "创建者"
     },
     "created_at": {
@@ -76,11 +70,11 @@
   },
   "indexes": [
     {
-      "IndexName": "user_type_idx",
+      "IndexName": "creator_type_idx",
       "MgoKeySchema": {
         "MgoIndexKeys": [
           {
-            "Name": "user_id",
+            "Name": "create_by",
             "Direction": 1
           },
           {

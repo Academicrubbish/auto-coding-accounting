@@ -48,8 +48,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useUserStore } from '@/store/user'
-import { setAuthCache } from '@/utils/auth-cache'
+import { useUserStore } from '../../store/user'
+import { setAuthCache } from '../../utils/auth-cache'
 
 const userStore = useUserStore()
 const isLoading = ref(false)

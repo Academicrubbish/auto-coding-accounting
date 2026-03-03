@@ -3,7 +3,7 @@
  * 使用延迟初始化避免 uniCloud 未就绪问题
  * 自动附加用户 openid
  */
-import { useUserStore } from '@/store/user'
+import { useUserStore } from '../store/user'
 
 export const callCloudFunction = (name: string, data?: any) => {
   if (typeof uniCloud === 'undefined' || !uniCloud.callFunction) {

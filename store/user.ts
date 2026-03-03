@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { getOpenidFromCache, getUserDataFromCache, isAuthCacheValid, clearAuthCache } from '@/utils/auth-cache'
+import { getOpenidFromCache, getUserDataFromCache, isAuthCacheValid, clearAuthCache } from '../utils/auth-cache'
 
 export const useUserStore = defineStore('user', {
   state: () => ({

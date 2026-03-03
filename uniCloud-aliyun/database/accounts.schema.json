@@ -2,7 +2,7 @@
   "bsonType": "object",
   "required": ["user_id", "name", "type", "balance"],
   "permission": {
-    "read": "doc.user_id == auth.openid || doc.create_by == ''",
+    "read": "doc.user_id == auth.openid",
     "create": "doc.user_id == auth.openid",
     "update": "doc.user_id == auth.openid",
     "delete": "doc.user_id == auth.openid"
@@ -55,7 +55,7 @@
     },
     "create_by": {
       "bsonType": "string",
-      "description": "创建者 openid，空字符串表示系统默认账户",
+      "description": "创建者 openid",
       "title": "创建者"
     },
     "created_at": {

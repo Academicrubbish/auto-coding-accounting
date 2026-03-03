@@ -5,6 +5,9 @@
 
 			// 尝试从缓存恢复登录状态
 			this.restoreAuthFromCache()
+
+			// 初始化公共数据（如果还没有）
+			this.initPublicData()
 		},
 		onShow: function() {
 			console.log('App Show')
@@ -44,6 +47,28 @@
 						console.log('恢复登录状态失败:', e)
 					}
 				})
+			},
+
+			/**
+			 * 初始化公共数据（公共分类）
+			 */
+			initPublicData() {
+				// 延迟执行，确保 uniCloud 已就绪
+				setTimeout(async () => {
+					try {
+						// 初始化公共分类
+						// @ts-ignore
+						const catRes = await uniCloud.callFunction({
+							name: 'category',
+							data: { action: 'init' }
+						})
+						if (catRes.result.code === 0) {
+							console.log('公共分类初始化结果:', catRes.result.message)
+						}
+					} catch (e) {
+						console.log('初始化公共数据失败（可能已初始化）:', e)
+					}
+				}, 2000)
 			}
 		}
 	}

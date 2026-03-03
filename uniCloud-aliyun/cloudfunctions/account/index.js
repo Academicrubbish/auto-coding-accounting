@@ -3,7 +3,7 @@
 /**
  * 账户管理云函数
  * 功能：账户的增删改查
- * 支持：游客查看系统默认账户，登录用户管理自己的账户
+ * 需要登录才能使用
  */
 
 const checkAuth = require('check-auth');
@@ -15,12 +15,11 @@ exports.main = async (event, context) => {
 
   const db = uniCloud.database();
   const collection = db.collection('accounts');
-  const command = db.command;
 
   try {
     switch (action) {
       case 'list':
-        return await listAccounts(collection, command, userOpenid);
+        return await listAccounts(collection, userOpenid);
       case 'create':
         return await createAccount(collection, userOpenid, data);
       case 'update':
@@ -46,29 +45,16 @@ exports.main = async (event, context) => {
 
 /**
  * 获取账户列表
- * 游客：只返回系统默认账户（create_by == ''）
- * 登录用户：返回用户自己的账户 + 系统默认账户
+ * 需要登录，只返回用户自己的账户
  */
-async function listAccounts(collection, command, openid) {
-  if (!openid) {
-    // 游客：只返回系统默认账户
-    const res = await collection.where({
-      create_by: ''
-    }).orderBy('sort_order', 'asc').get();
+async function listAccounts(collection, openid) {
+  // 验证登录
+  const loginError = checkAuth.checkLogin(openid);
+  if (loginError) return loginError;
 
-    return {
-      code: 0,
-      message: '获取成功',
-      data: res.data
-    };
-  }
-
-  // 登录用户：返回用户账户 + 系统默认账户
-  const res = await collection.where(command.or({
+  const res = await collection.where({
     user_id: openid
-  }, {
-    create_by: ''
-  })).orderBy('sort_order', 'asc').get();
+  }).orderBy('sort_order', 'asc').get();
 
   return {
     code: 0,
@@ -165,7 +151,6 @@ async function updateAccount(collection, openid, data) {
 /**
  * 删除账户
  * 只能删除自己创建的账户
- * 不能删除系统默认账户
  */
 async function deleteAccount(collection, openid, data) {
   const { _id } = data;

@@ -67,12 +67,12 @@ function checkSystemData(data, operation = 'update') {
 
   const record = Array.isArray(data) ? data[0] : data;
 
-  // 系统默认数据（create_by 为空字符串）不能被修改或删除
-  if (record.create_by === '' && (operation === 'update' || operation === 'delete')) {
+  // 公共数据（create_by 为 'common'）不能被修改或删除
+  if (record.create_by === 'common' && (operation === 'update' || operation === 'delete')) {
     const operationText = operation === 'update' ? '修改' : '删除';
     return {
       code: -1,
-      message: `不能${operationText}系统默认数据`,
+      message: `不能${operationText}公共数据`,
       data: null
     };
   }
@@ -178,7 +178,8 @@ async function checkCategoryPermission(collection, categoryId, openid, operation
     };
   }
 
-  return checkPermission(openid, checkRes.data, operation);
+  // 分类表使用 create_by 字段验证所有权
+  return checkPermission(openid, checkRes.data, operation, 'create_by');
 }
 
 /**
@@ -254,8 +255,8 @@ async function checkCategoryAvailable(collection, categoryId, openid) {
   }
 
   const category = categoryRes.data[0];
-  // 用户自己的分类或系统默认分类都可以使用
-  if (category.user_id !== openid && category.create_by !== '') {
+  // 用户自己的分类或公共分类都可以使用
+  if (category.create_by !== openid && category.create_by !== 'common') {
     return {
       code: -1,
       message: '无权使用此分类',

@@ -60,12 +60,12 @@
 
     <!-- 设置列表 -->
     <view class="function-section">
-      <view class="section-title">设置</view>
+      <view class="section-title">其他</view>
       <view class="function-list">
-        <view class="function-item" @tap="clearCache">
+        <view class="function-item" @tap="goSettings">
           <view class="item-left">
-            <text class="item-icon">🧹</text>
-            <text class="item-name">清除缓存</text>
+            <text class="item-icon">⚙️</text>
+            <text class="item-name">设置</text>
           </view>
           <text class="item-arrow">›</text>
         </view>
@@ -78,13 +78,6 @@
           <text class="item-arrow">›</text>
         </view>
       </view>
-    </view>
-
-    <!-- 退出登录 -->
-    <view class="logout-section" v-if="!isGuest">
-      <button class="logout-btn" @tap="handleLogout">
-        <text class="logout-text">退出登录</text>
-      </button>
     </view>
 
     <!-- 关于弹窗 -->
@@ -142,54 +135,75 @@ const formatMoney = (val: number) => {
 const loadUserStats = async () => {
   // 检查是否已登录
   if (!userStore.openid) {
-    console.log('我的页面：用户未登录，跳过加载')
+    console.log('【我的页面】用户未登录，跳过加载')
     return
   }
 
   try {
-    console.log('我的页面：加载统计数据，openid:', userStore.openid)
+    console.log('【我的页面】开始加载统计数据')
+    console.log('【我的页面】当前 openid:', userStore.openid)
+    console.log('【我的页面】当前 isGuest:', userStore.isGuest)
 
-    // 1. 获取交易总数 - 直接查数据库
+    // 1. 获取交易总数 - 通过云函数
+    console.log('【我的页面】步骤1：获取交易笔数')
     // @ts-ignore
-    const db = uniCloud.database()
-    const transactionCollection = db.collection('transactions')
-
-    const transRes = await transactionCollection.where({
-      user_id: userStore.openid
-    }).count()
-
-    if (transRes.result) {
-      transactionCount.value = transRes.result.total || 0
-      console.log('我的页面：交易笔数 =', transactionCount.value)
+    const transRes = await uniCloud.callFunction({
+      name: 'transaction',
+      data: {
+        action: 'list',
+        openid: userStore.openid,
+        page: 1,
+        pageSize: 1  // 只需要获取 count，不需要实际数据
+      }
+    })
+    console.log('【我的页面】交易云函数返回:', transRes.result)
+    if (transRes.result.code === 0) {
+      transactionCount.value = transRes.result.data.total || 0
+      console.log('【我的页面】交易笔数 =', transactionCount.value)
+    } else {
+      console.log('【我的页面】交易云函数返回错误:', transRes.result.message)
     }
 
     // 2. 获取账户数量
+    console.log('【我的页面】步骤2：获取账户数量')
     // @ts-ignore
     const accRes = await uniCloud.callFunction({
       name: 'account',
       data: { action: 'list', openid: userStore.openid }
     })
+    console.log('【我的页面】账户云函数返回:', accRes.result)
     if (accRes.result.code === 0) {
+      const allAccounts = accRes.result.data || []
+      console.log('【我的页面】所有账户:', allAccounts)
       // 只计算用户自己的账户，不包括系统默认账户
-      const userAccounts = (accRes.result.data || []).filter((a: any) => a.create_by !== '')
+      const userAccounts = allAccounts.filter((a: any) => a.create_by !== 'common')
       accountCount.value = userAccounts.length
-      console.log('我的页面：账户数量 =', accountCount.value)
+      console.log('【我的页面】用户自建账户数量 =', accountCount.value)
+    } else {
+      console.log('【我的页面】账户云函数返回错误:', accRes.result.message)
     }
 
     // 3. 获取分类数量
+    console.log('【我的页面】步骤3：获取分类数量')
     // @ts-ignore
     const catRes = await uniCloud.callFunction({
       name: 'category',
       data: { action: 'list', data: {}, openid: userStore.openid }
     })
+    console.log('【我的页面】分类云函数返回:', catRes.result)
     if (catRes.result.code === 0) {
+      const allCategories = catRes.result.data || []
+      console.log('【我的页面】所有分类:', allCategories)
       // 只计算用户自己的分类，不包括系统默认分类
-      const userCategories = (catRes.result.data || []).filter((c: any) => c.create_by !== '')
+      const userCategories = allCategories.filter((c: any) => c.create_by !== 'common')
       categoryCount.value = userCategories.length
-      console.log('我的页面：分类数量 =', categoryCount.value)
+      console.log('【我的页面】用户自建分类数量 =', categoryCount.value)
+    } else {
+      console.log('【我的页面】分类云函数返回错误:', catRes.result.message)
     }
 
     // 4. 获取总资产
+    console.log('【我的页面】步骤4：获取总资产')
     // @ts-ignore
     const statsRes = await uniCloud.callFunction({
       name: 'statistics',
@@ -198,13 +212,19 @@ const loadUserStats = async () => {
         openid: userStore.openid
       }
     })
+    console.log('【我的页面】统计云函数返回:', statsRes.result)
     if (statsRes.result.code === 0) {
-      totalAssets.value = formatMoney(statsRes.result.data.totalAssets || 0)
-      console.log('我的页面：总资产 =', totalAssets.value)
+      const assets = statsRes.result.data.totalAssets || 0
+      totalAssets.value = formatMoney(assets)
+      console.log('【我的页面】总资产原始值 =', assets)
+      console.log('【我的页面】总资产格式化后 =', totalAssets.value)
+    } else {
+      console.log('【我的页面】统计云函数返回错误:', statsRes.result.message)
     }
 
+    console.log('【我的页面】统计数据加载完成')
   } catch (error) {
-    console.error('加载用户统计失败：', error)
+    console.error('【我的页面】加载用户统计失败：', error)
   }
 }
 
@@ -251,6 +271,16 @@ const goCategoryManage = () => {
   // @ts-ignore
   uni.navigateTo({
     url: '/pages/category/index'
+  })
+}
+
+/**
+ * 跳转设置页面
+ */
+const goSettings = () => {
+  // @ts-ignore
+  uni.navigateTo({
+    url: '/pages/settings/index'
   })
 }
 
