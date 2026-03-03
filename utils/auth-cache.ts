@@ -1,67 +1,125 @@
 /**
- * 认证缓存管理
- * 用于管理 token 和 openid 的本地缓存
+ * 用户认证缓存工具
+ * 实现类似 Web 端 token 缓存的功能，一段时间内不需要用户反复登录
  */
 
-const CACHE_KEY_OPENID = 'openid'
-const CACHE_KEY_USER_DATA = 'user_data'
-const CACHE_KEY_TIMESTAMP = 'auth_timestamp'
-const CACHE_EXPIRE_TIME = 30 * 24 * 60 * 60 * 1000 // 30天
+const CACHE_KEY = 'user_auth_cache'
+const DEFAULT_EXPIRE_DAYS = 7 // 默认缓存 7 天
 
-export const setAuthCache = (openid: string, userData?: any) => {
+interface AuthCache {
+  openid: string
+  userData?: any
+  expireTime: number
+  createTime: number
+}
+
+/**
+ * 获取缓存数据
+ */
+export function getAuthCache(): AuthCache | null {
   try {
     // @ts-ignore
-    uni.setStorageSync(CACHE_KEY_OPENID, openid)
-    if (userData) {
-      // @ts-ignore
-      uni.setStorageSync(CACHE_KEY_USER_DATA, JSON.stringify(userData))
+    const cacheStr = uni.getStorageSync(CACHE_KEY)
+    if (!cacheStr) {
+      return null
     }
-    // @ts-ignore
-    uni.setStorageSync(CACHE_KEY_TIMESTAMP, Date.now())
-  } catch (e) {
-    console.error('保存认证缓存失败', e)
-  }
-}
-
-export const getOpenidFromCache = () => {
-  try {
-    // @ts-ignore
-    return uni.getStorageSync(CACHE_KEY_OPENID) || ''
-  } catch (e) {
-    return ''
-  }
-}
-
-export const getUserDataFromCache = () => {
-  try {
-    // @ts-ignore
-    const data = uni.getStorageSync(CACHE_KEY_USER_DATA)
-    return data ? JSON.parse(data) : null
+    const cache = JSON.parse(cacheStr) as AuthCache
+    return cache
   } catch (e) {
     return null
   }
 }
 
-export const clearAuthCache = () => {
+/**
+ * 保存认证缓存
+ * @param openid 用户 openid
+ * @param userData 用户数据
+ * @param expireDays 过期天数，默认 7 天
+ */
+export function setAuthCache(openid: string, userData?: any, expireDays: number = DEFAULT_EXPIRE_DAYS): boolean {
   try {
+    const expireTime = Date.now() + expireDays * 24 * 60 * 60 * 1000
+    const cache: AuthCache = {
+      openid: openid,
+      userData: userData,
+      expireTime: expireTime,
+      createTime: Date.now()
+    }
     // @ts-ignore
-    uni.removeStorageSync(CACHE_KEY_OPENID)
-    // @ts-ignore
-    uni.removeStorageSync(CACHE_KEY_USER_DATA)
-    // @ts-ignore
-    uni.removeStorageSync(CACHE_KEY_TIMESTAMP)
-  } catch (e) {
-    console.error('清除认证缓存失败', e)
-  }
-}
-
-export const isAuthCacheValid = () => {
-  try {
-    // @ts-ignore
-    const timestamp = uni.getStorageSync(CACHE_KEY_TIMESTAMP)
-    if (!timestamp) return false
-    return Date.now() - timestamp < CACHE_EXPIRE_TIME
+    uni.setStorageSync(CACHE_KEY, JSON.stringify(cache))
+    return true
   } catch (e) {
     return false
   }
+}
+
+/**
+ * 清除认证缓存
+ */
+export function clearAuthCache(): boolean {
+  try {
+    // @ts-ignore
+    uni.removeStorageSync(CACHE_KEY)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+/**
+ * 检查缓存是否有效
+ */
+export function isAuthCacheValid(): boolean {
+  const cache = getAuthCache()
+  if (!cache || !cache.openid) {
+    return false
+  }
+
+  // 检查是否过期
+  const now = Date.now()
+  if (cache.expireTime && now > cache.expireTime) {
+    // 缓存已过期，清除缓存
+    clearAuthCache()
+    return false
+  }
+
+  return true
+}
+
+/**
+ * 从缓存获取 openid
+ */
+export function getOpenidFromCache(): string | null {
+  if (!isAuthCacheValid()) {
+    return null
+  }
+
+  const cache = getAuthCache()
+  return cache ? cache.openid : null
+}
+
+/**
+ * 从缓存获取用户数据
+ */
+export function getUserDataFromCache(): any | null {
+  if (!isAuthCacheValid()) {
+    return null
+  }
+
+  const cache = getAuthCache()
+  return cache?.userData || null
+}
+
+/**
+ * 获取缓存剩余有效时间（毫秒）
+ */
+export function getCacheRemainingTime(): number {
+  const cache = getAuthCache()
+  if (!cache || !cache.expireTime) {
+    return 0
+  }
+
+  const now = Date.now()
+  const remaining = cache.expireTime - now
+  return remaining > 0 ? remaining : 0
 }

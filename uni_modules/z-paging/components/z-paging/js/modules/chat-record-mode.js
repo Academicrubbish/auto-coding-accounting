@@ -111,7 +111,12 @@ export default {
 		}
 	},
 	mounted() {
-		this.addKeyboardHeightChangeListener();
+		// 监听键盘高度变化（H5、百度小程序、抖音小程序、飞书小程序不支持）
+		// #ifndef H5 || MP-BAIDU || MP-TOUTIAO
+		if (this.useChatRecordMode) {
+			uni.onKeyboardHeightChange(this._handleKeyboardHeightChange);
+		}
+		// #endif
 	},
 	methods: {
 		// 添加聊天记录
@@ -123,15 +128,6 @@ export default {
 		// 手动触发滚动到顶部加载更多，聊天记录模式时有效
 		doChatRecordLoadMore() {
 			this.useChatRecordMode && this._onLoadingMore('click');
-		},
-		// 手动添加键盘高度变化监听
-		addKeyboardHeightChangeListener() {
-			// 监听键盘高度变化（H5、百度小程序、抖音小程序、飞书小程序不支持）
-			// #ifndef H5 || MP-BAIDU || MP-TOUTIAO
-			if (this.useChatRecordMode) {
-				uni.onKeyboardHeightChange(this._handleKeyboardHeightChange);
-			}
-			// #endif
 		},
 		// 处理键盘高度变化
 		_handleKeyboardHeightChange(res) {
