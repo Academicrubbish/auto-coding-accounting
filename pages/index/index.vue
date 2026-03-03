@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useUserStore } from '../../store/user'
 
 const userStore = useUserStore()
@@ -94,7 +94,13 @@ const formatMoney = (amount: number) => {
  * 格式化日期
  */
 const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr)
+  let date: Date
+  if (dateStr && typeof dateStr === 'object' && dateStr.$date) {
+    // uniCloud Date 格式
+    date = new Date(dateStr.$date)
+  } else {
+    date = new Date(dateStr)
+  }
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${month}-${day}`
@@ -104,18 +110,28 @@ const formatDate = (dateStr: string) => {
  * 获取首页统计数据
  */
 const loadHomeData = async () => {
+  // 检查是否已登录
+  if (!userStore.openid) {
+    console.log('用户未登录，跳过加载')
+    return
+  }
+
   if (isLoading.value) return
   isLoading.value = true
 
   try {
+    console.log('加载首页数据，openid:', userStore.openid)
+
     // @ts-ignore
     const res = await uniCloud.callFunction({
       name: 'statistics',
       data: {
         action: 'overview',
-        openid: userStore.openid  // 传递用户 openid
+        openid: userStore.openid
       }
     })
+
+    console.log('首页数据返回:', res.result)
 
     if (res.result.code === 0) {
       const data = res.result.data
@@ -123,13 +139,13 @@ const loadHomeData = async () => {
       monthIncome.value = data.monthIncome || 0
       monthExpense.value = data.monthExpense || 0
       recentTransactions.value = (data.recentTransactions || []).map((t: any) => {
-        // 这里需要关联查询分类名称，暂时使用占位符
         return {
           ...t,
-          categoryIcon: t.type === 'income' ? '💰' : '💸',
-          categoryName: t.remark || '交易'
+          categoryIcon: t.categoryIcon || (t.type === 'income' ? '💰' : '💸'),
+          categoryName: t.categoryName || t.remark || '交易'
         }
       })
+      console.log('近期交易数据:', recentTransactions.value)
     } else {
       console.error('加载首页数据失败：', res.result.message)
     }
@@ -177,9 +193,20 @@ const onShow = () => {
   loadHomeData()
 }
 
+// 监听登录状态变化
+watch(() => userStore.openid, (newOpenid) => {
+  if (newOpenid) {
+    console.log('检测到 openid 变化，重新加载数据')
+    loadHomeData()
+  }
+})
+
 // 生命周期
 onMounted(() => {
-  loadHomeData()
+  // 延迟加载，确保登录状态已恢复
+  setTimeout(() => {
+    loadHomeData()
+  }, 500)
 })
 
 // 暴露 onShow 供 uni-app 调用
