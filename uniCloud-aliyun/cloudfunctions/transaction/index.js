@@ -67,6 +67,9 @@ async function listTransactions(collection, openid, data) {
     keyword
   } = data || {};
 
+  // 获取 db 实例
+  const db = uniCloud.database();
+
   // 构建查询条件
   let whereCondition = { user_id: openid };
 
