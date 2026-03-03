@@ -6,50 +6,50 @@
       v-model="transactions"
       @query="queryList"
       :default-page-size="pageSize"
-      empty-text="暂无交易记录"
-      empty-view-img="/static/empty.png"
-      empty-view-text="暂无交易记录"
-      empty-view-btn-text="去记账"
-      @emptyViewClick="goRecord"
+      :show-default-empty-view="false"
     >
       <!-- 顶部筛选栏插槽 -->
-      <view slot="top">
-        <view class="filter-bar">
-          <view class="filter-item" @tap="showFilterPopup = true">
-            <text class="filter-icon">🔍</text>
-            <text class="filter-text">筛选</text>
-          </view>
-          <view class="filter-summary" v-if="hasActiveFilters">
-            <text class="summary-text">{{ filterSummary }}</text>
-            <text class="clear-btn" @tap="clearFilters">清除</text>
+      <template #top>
+        <view>
+          <view class="filter-bar">
+            <view class="filter-item" @tap="showFilterPopup = true">
+              <text class="filter-icon">🔍</text>
+              <text class="filter-text">筛选</text>
+            </view>
+            <view class="filter-summary" v-if="hasActiveFilters">
+              <text class="summary-text">{{ filterSummary }}</text>
+              <text class="clear-btn" @tap="clearFilters">清除</text>
+            </view>
           </view>
         </view>
-      </view>
+      </template>
 
       <!-- 自定义空状态/错误状态 -->
-      <view slot="empty" slot-scope="{ isLoadFailed: slotIsLoadFailed }">
-        <!-- 未登录状态 -->
-        <view v-if="!isLoggedIn" class="custom-empty-container">
-          <text class="empty-icon">🔐</text>
-          <text class="empty-title">请先登录</text>
-          <text class="empty-desc">登录后即可查看交易记录</text>
-          <button class="empty-btn" @tap="goLogin">立即登录</button>
+      <template #empty>
+        <view>
+          <!-- 未登录状态 -->
+          <view v-if="!isLoggedIn" class="custom-empty-container">
+            <text class="empty-icon">🔐</text>
+            <text class="empty-title">请先登录</text>
+            <text class="empty-desc">登录后即可查看交易记录</text>
+            <button class="empty-btn" @tap="goLogin">立即登录</button>
+          </view>
+          <!-- 加载失败状态 -->
+          <view v-else-if="isLoadFailed" class="custom-empty-container">
+            <text class="empty-icon">⚠️</text>
+            <text class="empty-title">加载失败</text>
+            <text class="empty-desc">请稍后重试</text>
+            <button class="empty-btn" @tap="reloadData">重新加载</button>
+          </view>
+          <!-- 空数据状态 -->
+          <view v-else class="custom-empty-container">
+            <text class="empty-icon">📊</text>
+            <text class="empty-title">暂无交易记录</text>
+            <text class="empty-desc">开始记录您的第一笔交易吧</text>
+            <button class="empty-btn" @tap="goRecord">记一笔</button>
+          </view>
         </view>
-        <!-- 加载失败状态 -->
-        <view v-else-if="slotIsLoadFailed || isLoadFailed" class="custom-empty-container">
-          <text class="empty-icon">⚠️</text>
-          <text class="empty-title">加载失败</text>
-          <text class="empty-desc">请稍后重试</text>
-          <button class="empty-btn" @tap="reloadData">重新加载</button>
-        </view>
-        <!-- 空数据状态 -->
-        <view v-else class="custom-empty-container">
-          <text class="empty-icon">📊</text>
-          <text class="empty-title">暂无交易记录</text>
-          <text class="empty-desc">开始记录您的第一笔交易吧</text>
-          <button class="empty-btn" @tap="goRecord">记一笔</button>
-        </view>
-      </view>
+      </template>
 
       <!-- 分组列表 -->
       <view class="grouped-list" v-if="groupedTransactions.length > 0">

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { nextTick } from 'vue'
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
 
 /**

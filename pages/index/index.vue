@@ -7,70 +7,75 @@
       @query="queryList"
       :default-page-size="20"
       :use-page-scroll="false"
+      :show-default-empty-view="false"
     >
       <!-- 顶部内容插槽 -->
-      <view slot="top">
-        <!-- 顶部总资产卡片 -->
-        <view class="asset-card">
-          <view class="asset-header">
-            <text class="asset-label">总资产</text>
-            <text class="asset-value">¥{{ formatMoney(totalAssets) }}</text>
-          </view>
-          <view class="asset-detail">
-            <view class="detail-item">
-              <text class="detail-label">本月收入</text>
-              <text class="detail-value income">+¥{{ formatMoney(monthIncome) }}</text>
+      <template #top>
+        <view>
+          <!-- 顶部总资产卡片 -->
+          <view class="asset-card">
+            <view class="asset-header">
+              <text class="asset-label">总资产</text>
+              <text class="asset-value">¥{{ formatMoney(totalAssets) }}</text>
             </view>
-            <view class="detail-item">
-              <text class="detail-label">本月支出</text>
-              <text class="detail-value expense">-¥{{ formatMoney(monthExpense) }}</text>
+            <view class="asset-detail">
+              <view class="detail-item">
+                <text class="detail-label">本月收入</text>
+                <text class="detail-value income">+¥{{ formatMoney(monthIncome) }}</text>
+              </view>
+              <view class="detail-item">
+                <text class="detail-label">本月支出</text>
+                <text class="detail-value expense">-¥{{ formatMoney(monthExpense) }}</text>
+              </view>
             </view>
           </view>
-        </view>
 
-        <!-- 快捷记账按钮 -->
-        <view class="quick-actions">
-          <button class="action-btn expense-btn" @tap="goRecord('expense')">
-            <text class="action-icon">💸</text>
-            <text class="action-text">记支出</text>
-          </button>
-          <button class="action-btn income-btn" @tap="goRecord('income')">
-            <text class="action-icon">💰</text>
-            <text class="action-text">记收入</text>
-          </button>
-        </view>
+          <!-- 快捷记账按钮 -->
+          <view class="quick-actions">
+            <button class="action-btn expense-btn" @tap="goRecord('expense')">
+              <text class="action-icon">💸</text>
+              <text class="action-text">记支出</text>
+            </button>
+            <button class="action-btn income-btn" @tap="goRecord('income')">
+              <text class="action-icon">💰</text>
+              <text class="action-text">记收入</text>
+            </button>
+          </view>
 
-        <!-- 近期交易标题 -->
-        <view class="recent-header">
-          <text class="section-title">近期交易</text>
-          <text class="section-more" @tap="goList">查看全部</text>
+          <!-- 近期交易标题 -->
+          <view class="recent-header">
+            <text class="section-title">近期交易</text>
+            <text class="section-more" @tap="goList">查看全部</text>
+          </view>
         </view>
-      </view>
+      </template>
 
       <!-- 自定义空状态/错误状态 -->
-      <view slot="empty" slot-scope="{ isLoadFailed: slotIsLoadFailed }">
-        <!-- 未登录状态 -->
-        <view v-if="!isLoggedIn" class="custom-empty-container">
-          <text class="empty-icon">🔐</text>
-          <text class="empty-title">请先登录</text>
-          <text class="empty-desc">登录后即可查看交易记录</text>
-          <button class="empty-btn" @tap="goLogin">立即登录</button>
+      <template #empty>
+        <view>
+          <!-- 未登录状态 -->
+          <view v-if="!isLoggedIn" class="custom-empty-container">
+            <text class="empty-icon">🔐</text>
+            <text class="empty-title">请先登录</text>
+            <text class="empty-desc">登录后即可查看交易记录</text>
+            <button class="empty-btn" @tap="goLogin">立即登录</button>
+          </view>
+          <!-- 加载失败状态 -->
+          <view v-else-if="isLoadFailed" class="custom-empty-container">
+            <text class="empty-icon">⚠️</text>
+            <text class="empty-title">加载失败</text>
+            <text class="empty-desc">请稍后重试</text>
+            <button class="empty-btn" @tap="reloadData">重新加载</button>
+          </view>
+          <!-- 空数据状态 -->
+          <view v-else class="custom-empty-container">
+            <text class="empty-icon">📊</text>
+            <text class="empty-title">暂无交易记录</text>
+            <text class="empty-desc">点击上方按钮开始记账</text>
+            <button class="empty-btn" @tap="goRecord('expense')">记一笔</button>
+          </view>
         </view>
-        <!-- 加载失败状态 -->
-        <view v-else-if="slotIsLoadFailed || isLoadFailed" class="custom-empty-container">
-          <text class="empty-icon">⚠️</text>
-          <text class="empty-title">加载失败</text>
-          <text class="empty-desc">请稍后重试</text>
-          <button class="empty-btn" @tap="reloadData">重新加载</button>
-        </view>
-        <!-- 空数据状态 -->
-        <view v-else class="custom-empty-container">
-          <text class="empty-icon">📊</text>
-          <text class="empty-title">暂无交易记录</text>
-          <text class="empty-desc">点击上方按钮开始记账</text>
-          <button class="empty-btn" @tap="goRecord('expense')">记一笔</button>
-        </view>
-      </view>
+      </template>
 
       <!-- 交易列表 -->
       <view class="transaction-list">
