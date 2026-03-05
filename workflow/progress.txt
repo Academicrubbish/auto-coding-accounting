@@ -587,3 +587,27 @@
 - 需要进一步测试具体功能交互（点击、输入、提交等）
 - 当前测试覆盖 Task 30 的基础页面访问部分
 
+
+---
+
+## 2026-03-05 - Task: MCP UID 显示问题修复
+
+### What was done:
+- ✅ 搜索 weixin-devtools-mcp 官方文档和 GitHub 仓库
+- ✅ 分析本地 MCP 服务器响应格式
+- ✅ 发现问题：`content` 数组中的文本内容未被客户端显示
+- ✅ 修改 server.ts 将文本内容也添加到 `structuredContent.text`
+- ✅ 重新构建本地 MCP 服务器
+- ✅ 创建 .claude/MCP_UID_FIX.md 说明文档
+
+### Testing:
+- ⚠️ 需要重启 VSCode 才能加载新的 MCP 服务器代码
+- ⏳ 待重启后验证 `query_selector` 返回 UID 信息
+
+### Technical Details:
+- MCP 响应包含 `content`（文本数组）和 `structuredContent`（结构化数据）
+- 修改后文本内容会同时出现在两个位置，确保客户端能显示
+
+### References:
+- https://github.com/wooter-s/weixin-devtools-mcp
+- https://blog.csdn.net/gitblog_00065/article/details/137670057

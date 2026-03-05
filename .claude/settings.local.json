@@ -71,7 +71,9 @@
       "mcp__weixin-devtools__wait_for",
       "mcp__playwright__browser_navigate",
       "mcp__zai-mcp-server__diagnose_error_screenshot",
-      "mcp__weixin-devtools__navigate_back"
+      "mcp__weixin-devtools__navigate_back",
+      "Bash(curl -s https://raw.githubusercontent.com/wooter-s/weixin-devtools-mcp/main/src/tools.ts)",
+      "Bash(/d/mystudyspace/test/auto-coding-accounting/workflow/progress.txt:*)"
     ]
   }
 }
