@@ -401,6 +401,11 @@ onMounted(() => {
 
   if (options.type && (options.type === 'income' || options.type === 'expense')) {
     recordType.value = options.type
+  
+  // 处理编辑模式
+  if (options.mode === 'edit' && options.id) {
+    loadTransactionForEdit(options.id)
+  }
   }
 
   loadCategories()
@@ -699,3 +704,45 @@ onMounted(() => {
   text-align: right;
 }
 </style>
+
+/**
+ * 加载交易数据用于编辑
+ */
+const loadTransactionForEdit = async (id: string) => {
+  try {
+    // @ts-ignore
+    const res = await uniCloud.callFunction({
+      name: 'transaction',
+      data: {
+        action: 'getById',
+        openid: userStore.openid,
+        data: { _id: id }
+      }
+    })
+
+    if (res.result.code === 0) {
+      const t = res.result.data
+      amount.value = String(t.amount)
+      recordType.value = t.type
+      selectedCategoryId.value = t.category_id
+      selectedCategoryName.value = t.categoryName
+      selectedCategoryIcon.value = t.categoryIcon || '📁'
+      selectedAccountId.value = t.account_id
+      selectedAccountName.value = t.accountName
+      remark.value = t.remark || ''
+      
+      // 设置日期
+      if (t.transaction_date) {
+        const date = new Date(t.transaction_date)
+        transactionDate.value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+      }
+    }
+  } catch (error) {
+    console.error('加载交易数据失败：', error)
+    // @ts-ignore
+    uni.showToast({
+      title: '加载失败',
+      icon: 'none'
+    })
+  }
+}
