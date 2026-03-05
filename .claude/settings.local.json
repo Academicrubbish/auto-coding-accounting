@@ -73,7 +73,15 @@
       "mcp__zai-mcp-server__diagnose_error_screenshot",
       "mcp__weixin-devtools__navigate_back",
       "Bash(curl -s https://raw.githubusercontent.com/wooter-s/weixin-devtools-mcp/main/src/tools.ts)",
-      "Bash(/d/mystudyspace/test/auto-coding-accounting/workflow/progress.txt:*)"
+      "Bash(/d/mystudyspace/test/auto-coding-accounting/workflow/progress.txt:*)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :9420)",
+      "Bash(findstr LISTENING)",
+      "Bash(findstr :279)",
+      "Bash(tasklist)",
+      "Bash(findstr -i \"wechat\\\\|微信\")",
+      "Bash(findstr -i \"web\\\\|devtools\\\\|wechat\")",
+      "mcp__weixin-devtools__input_text"
     ]
   }
 }

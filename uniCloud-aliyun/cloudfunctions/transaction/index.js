@@ -179,6 +179,7 @@ async function listTransactions(collection, openid, data) {
 
 /**
  * 获取单条交易详情
+ * 关联查询账户和分类信息
  */
 async function getTransactionById(collection, openid, data) {
   const { _id } = data;
@@ -207,10 +208,48 @@ async function getTransactionById(collection, openid, data) {
   const ownershipError = checkAuth.checkOwnership(res.data, openid);
   if (ownershipError) return ownershipError;
 
+  // 关联查询账户和分类信息
+  const db = uniCloud.database();
+  const accountCollection = db.collection('accounts');
+  const categoryCollection = db.collection('categories');
+
+  let accountName = '未知账户';
+  let accountIcon = '';
+  let categoryName = '未分类';
+  let categoryIcon = '';
+
+  try {
+    if (transaction.account_id) {
+      const accountRes = await accountCollection.doc(transaction.account_id).get();
+      if (accountRes.data.length > 0) {
+        accountName = accountRes.data[0].name;
+        accountIcon = accountRes.data[0].icon || '';
+      }
+    }
+
+    if (transaction.category_id) {
+      const categoryRes = await categoryCollection.doc(transaction.category_id).get();
+      if (categoryRes.data.length > 0) {
+        categoryName = categoryRes.data[0].name;
+        categoryIcon = categoryRes.data[0].icon || '';
+      }
+    }
+  } catch (err) {
+    console.error('查询关联数据失败：', err);
+    // 即使关联查询失败，也返回基础数据
+  }
+
+  // 返回包含关联信息的交易数据
   return {
     code: 0,
     message: '获取成功',
-    data: transaction
+    data: {
+      ...transaction,
+      accountName,
+      accountIcon,
+      categoryName,
+      categoryIcon
+    }
   };
 }
 
@@ -279,12 +318,43 @@ async function createTransaction(collection, accountCollection, openid, data) {
     updated_at: new Date()
   });
 
+  // 获取完整的交易数据（包含关联信息）
+  const newTransactionRes = await collection.doc(createRes.id).get();
+  const newTransaction = newTransactionRes.data[0];
+
+  // 关联查询账户和分类信息
+  let accountName = '未知账户';
+  let accountIcon = '';
+  let categoryName = '未分类';
+  let categoryIcon = '';
+
+  try {
+    const accountRes = await accountCollection.doc(createData.account_id).get();
+    if (accountRes.data.length > 0) {
+      accountName = accountRes.data[0].name;
+      accountIcon = accountRes.data[0].icon || '';
+    }
+
+    const categoryCollection = uniCloud.database().collection('categories');
+    const categoryRes = await categoryCollection.doc(createData.category_id).get();
+    if (categoryRes.data.length > 0) {
+      categoryName = categoryRes.data[0].name;
+      categoryIcon = categoryRes.data[0].icon || '';
+    }
+  } catch (err) {
+    console.error('查询关联数据失败：', err);
+  }
+
   return {
     code: 0,
     message: '创建成功',
     data: {
       _id: createRes.id,
-      ...createData
+      ...newTransaction,
+      accountName,
+      accountIcon,
+      categoryName,
+      categoryIcon
     }
   };
 }
