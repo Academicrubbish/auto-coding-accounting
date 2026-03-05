@@ -557,3 +557,33 @@
 4. 在 uniCloud 数据库创建系统默认数据（参考 default-data-guide.md）
 5. 在微信开发者工具中测试所有功能（参考 testing-guide.md）
 
+---
+
+## 2026-03-05 - Task: MCP 导航测试 (Task 30 重新执行)
+
+### What was done:
+- ✅ 连接微信开发者工具自动化 (端口 27902)
+- ✅ 使用 weixin-devtools MCP 测试所有页面导航
+- ✅ 验证所有页面路由正常加载：
+  - Login: pages/login/index
+  - Home: pages/index/index (tabbar)
+  - List: pages/list/index
+  - Stats: pages/stats/index (tabbar)
+  - Account: pages/account/index
+  - Category: pages/category/index
+  - Mine: pages/mine/index (tabbar)
+  - Settings: pages/settings/index
+  - Record: pages/record/index
+  - Detail: pages/detail/index
+- ✅ 验证 navigate_to, navigate_back, switch_tab 功能正常
+
+### Testing:
+- ✅ 所有页面路由均可正常访问
+- ✅ TabBar 切换正常
+- ✅ 页面返回导航正常
+
+### Notes:
+- MCP 连接成功后可进行自动化测试
+- 需要进一步测试具体功能交互（点击、输入、提交等）
+- 当前测试覆盖 Task 30 的基础页面访问部分
+

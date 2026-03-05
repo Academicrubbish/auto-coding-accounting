@@ -120,6 +120,152 @@ const res = await uniCloud.callFunction({
 - Utils: `utils/*.ts`
 - Cloud Functions: `uniCloud-aliyun/cloudfunctions/*/index.js`
 - Components: `uni_modules/z-paging/`, `uni_modules/uni-datetime-picker/`
+- Build Output: `unpackage/dist/dev/mp-weixin/` (WeChat DevTools opens this path)
+
+## WeChat Mini Program MCP Debugging
+
+### MCP Server: weixin-devtools-mcp (FIXED VERSION)
+
+**Repository**: [wooter-s/weixin-devtools-mcp](https://github.com/wooter-s/weixin-devtools-mcp)
+
+**Local Fixed Version**: `d:/mystudyspace/test/temp/weixin-mcp/`
+
+**Fix Applied**: Added `shell: globalThis.process.platform === 'win32'` to spawn() call in `src/tools.ts` line 769
+
+**Configuration File**: `c:\Users\yuanc\.claude.json` (global)
+
+**Current Config (Updated 2026-03-05)**:
+```json
+{
+  "mcpServers": {
+    "weixin-devtools": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "d:/mystudyspace/test/temp/weixin-mcp/build/server.js",
+        "--projectPath=D:/mystudyspace/test/auto-coding-accounting/unpackage/dist/dev/mp-weixin",
+        "--cliPath=D:/Program Files/微信web开发者工具/cli.bat",
+        "--port=27902",
+        "--timeout=60000"
+      ]
+    }
+  }
+}
+```
+
+### Prerequisites for MCP Connection
+1. WeChat DevTools must be **OPEN** with project loaded
+2. **Service Port must be ENABLED**: 设置 → 安全设置 → 服务端口 → 开启
+3. Mini program must be **RUNNING** (not compile error state)
+4. **Automation service must be started**: Run `cli auto` command first
+
+### Connection Steps
+
+#### Step 1: Start Automation Service
+```bash
+"D:/Program Files/微信web开发者工具/cli.bat" auto --project="d:/mystudyspace/test/auto-coding-accounting/unpackage/dist/dev/mp-weixin" --auto-port=9420
+```
+
+This will:
+- Start automation service on port 9420
+- Open a new DevTools window if needed
+- Output: `✔ auto`
+
+#### Step 2: Connect via MCP
+```json
+{
+  "strategy": "wsEndpoint",
+  "wsEndpoint": "ws://127.0.0.1:9420"
+}
+```
+
+### Available MCP Tools (20 tools - core profile)
+
+**Connection**:
+- `connect_devtools` - Connect to WeChat DevTools
+- `disconnect_devtools` - Disconnect from DevTools
+- `get_connection_status` - Get current connection status
+- `get_current_page` - Get current page info
+- `reconnect_devtools` - Reconnect with previous settings
+
+**Page Operations**:
+- `get_page_snapshot` - Get page element snapshot
+- `click` - Click element by uid
+- `input_text` - Input text into element
+- `get_value` - Get element value/text
+- `set_form_control` - Set form control value (picker/switch/slider)
+- `evaluate_script` - Execute JavaScript in mini-program context
+
+**Navigation**:
+- `navigate_to` - Navigate to page
+- `navigate_back` - Go back to previous page
+- `switch_tab` - Switch to tab page
+- `relaunch` - Relaunch to specified page
+
+**Assertions**:
+- `assert_text` - Assert element text content
+- `assert_attribute` - Assert element attribute value
+- `assert_state` - Assert element state (visible/enabled/checked/focused)
+
+### Usage Example
+```
+1. Run: cli auto --project=... --auto-port=9420
+2. Connect: { strategy: "wsEndpoint", wsEndpoint: "ws://127.0.0.1:9420" }
+3. Get snapshot: get_page_snapshot({ format: "compact" })
+4. Click element: click({ uid: "button.submit" })
+```
+
+### Port Information
+- **HTTP Service Port**: 27902 (for DevTools HTTP API)
+- **Automation Port**: 9420 (for miniprogram-automator WebSocket)
+- These are **different ports** - automation uses a separate WebSocket connection
 
 
 用户留：该文件作为AI对话要素重点记录文档，用于防止AI幻觉，重启AI的阅读文档。每次用户有对话更新，同时你也要更新当前文档要素重点，防止AI窗口关闭，上下文丢失
+
+---
+
+## Session History
+
+### 2026-03-05: MCP Setup & Screenshot Testing (SUCCESS ✅)
+
+**Task**: Test WeChat Mini Program screenshot functionality via MCP
+
+**Problem Identified**: Windows-specific `spawn EINVAL` bug in `weixin-devtools-mcp`
+- Root cause: Node.js `child_process.spawn()` on Windows requires `shell: true` option for `.bat` files
+- Error occurred when MCP tool tried to spawn WeChat DevTools CLI
+
+**Solution Implemented**:
+1. Cloned weixin-devtools-mcp repository to `d:/mystudyspace/test/temp/weixin-mcp/`
+2. Modified `src/tools.ts` line 768-769:
+   ```typescript
+   const process = spawn(cliPath, args, {
+     shell: globalThis.process.platform === 'win32',  // ADDED
+     stdio: ['ignore', 'pipe', 'pipe']
+   });
+   ```
+3. Rebuilt project: `npm run build`
+4. Updated global MCP config to use local fixed version
+
+**Connection Success**:
+- ✅ CLI spawn issue resolved
+- ✅ Automation service starts on port 9420
+- ✅ MCP connection successful via `wsEndpoint` strategy
+- ✅ Page snapshot retrieved: pages/index/index (45 elements)
+
+**Connection Steps**:
+1. Start automation: `cli auto --project=... --auto-port=9420`
+2. Connect: `{ strategy: "wsEndpoint", wsEndpoint: "ws://127.0.0.1:9420" }`
+3. Get snapshot: `get_page_snapshot({ format: "compact" })`
+
+**Files Modified**:
+- `d:/mystudyspace/test/temp/weixin-mcp/src/tools.ts` - Added `shell: true` for Windows
+- `c:\Users\yuanc\.claude.json` - Updated to use local fixed version
+- `d:\mystudyspace\test\auto-coding-accounting\.claude\mcp_config.json` - Added projectPath/cliPath
+- `d:\mystudyspace\test\auto-coding-accounting\CLAUDE.md` - Updated documentation
+
+**Next Steps**:
+- Test screenshot functionality
+- Test element interaction (click, input)
+- Test navigation between pages
+- Report Windows bug to upstream repository
