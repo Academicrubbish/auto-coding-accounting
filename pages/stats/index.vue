@@ -27,7 +27,7 @@
       <view class="overview-item balance-item">
         <text class="overview-label">结余</text>
         <text class="overview-value" :class="monthBalance >= 0 ? 'income' : 'expense'">
-          ¥{{ formatMoney(Math.abs(monthBalance)) }}
+          ¥{{ formatMoney(monthBalance) }}
         </text>
       </view>
     </view>

@@ -183,7 +183,7 @@ async function initPublicCategories(collection) {
 
 /**
  * 获取分类列表
- * 游客：只返回系统默认分类（create_by == ''）
+ * 游客：只返回系统默认分类（create_by == 'common'）
  * 登录用户：返回用户自己的分类 + 系统默认分类
  * 支持按类型筛选（支出/收入）
  */

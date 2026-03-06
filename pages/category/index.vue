@@ -35,7 +35,7 @@
             <text class="category-count">{{ item.transactionCount || 0 }} 笔</text>
           </view>
         </view>
-        <view class="item-right" v-if="item.create_by !== ''">
+        <view class="item-right" v-if="item.create_by === 'common'">
           <text class="item-badge">系统</text>
         </view>
         <text class="item-arrow">›</text>
@@ -118,7 +118,7 @@ const handleAdd = () => {
  */
 const handleEdit = (item: any) => {
   // 系统默认分类不能编辑
-  if (item.create_by === '') {
+  if (item.create_by === 'common') {
     // @ts-ignore
     uni.showToast({
       title: '系统默认分类不能编辑',

@@ -58,17 +58,21 @@ async function getMonthlyStatistics(collection, command, openid, data) {
 
   const { year, month } = data;
 
-  // 计算月份起止日期
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59);
+  // 计算月份起止日期 - 使用字符串格式避免时区问题
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const endDate = `${year}-${String(month).padStart(2, '0')}-31`;
 
-  // 查询该月的所有交易
+  // 查询该月的所有交易 - 使用字符串日期比较
   const res = await collection.where({
-    user_id: openid,
-    transaction_date: command.gte(startDate).and(command.lte(endDate))
+    user_id: openid
   }).get();
 
-  const transactions = res.data;
+  // 在内存中过滤指定月份的数据
+  const transactions = res.data.filter(t => {
+    const date = new Date(t.transaction_date);
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return dateStr >= startDate && dateStr <= endDate;
+  });
 
   // 计算总收入、总支出
   let totalIncome = 0;

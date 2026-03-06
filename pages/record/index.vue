@@ -181,6 +181,9 @@ const remark = ref('')
 const today = new Date()
 const transactionDate = ref(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`)
 const isSubmitting = ref(false)
+// 编辑模式
+const isEditMode = ref(false)
+const editTransactionId = ref('')
 
 // 弹窗状态
 const showCategoryPicker = ref(false)
@@ -304,6 +307,50 @@ const selectAccount = (item: any) => {
 }
 
 /**
+ * 加载交易数据用于编辑
+ */
+const loadTransactionForEdit = async (id: string) => {
+  try {
+    // @ts-ignore
+    const res = await uniCloud.callFunction({
+      name: 'transaction',
+      data: {
+        action: 'getById',
+        openid: userStore.openid,
+        data: { _id: id }
+      }
+    })
+
+    if (res.result.code === 0) {
+      const t = res.result.data
+      amount.value = String(t.amount)
+      recordType.value = t.type
+      selectedCategoryId.value = t.category_id
+      selectedCategoryName.value = t.categoryName
+      selectedCategoryIcon.value = t.categoryIcon || '📁'
+      selectedAccountId.value = t.account_id
+      selectedAccountName.value = t.accountName
+      remark.value = t.remark || ''
+      isEditMode.value = true
+      editTransactionId.value = id
+
+      // 设置日期
+      if (t.transaction_date) {
+        const date = new Date(t.transaction_date)
+        transactionDate.value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+      }
+    }
+  } catch (error) {
+    console.error('加载交易数据失败：', error)
+    // @ts-ignore
+    uni.showToast({
+      title: '加载失败',
+      icon: 'none'
+    })
+  }
+}
+
+/**
  * 提交记账
  */
 const handleSubmit = async () => {
@@ -341,19 +388,26 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
+    const action = isEditMode.value ? 'update' : 'create'
+    const requestData: any = {
+      account_id: selectedAccountId.value,
+      category_id: selectedCategoryId.value,
+      type: recordType.value,
+      amount: numAmount,
+      remark: remark.value,
+      transaction_date: transactionDate.value
+    }
+
+    if (isEditMode.value) {
+      requestData._id = editTransactionId.value
+    }
+
     // @ts-ignore
     const res = await uniCloud.callFunction({
       name: 'transaction',
       data: {
-        action: 'create',
-        data: {
-          account_id: selectedAccountId.value,
-          category_id: selectedCategoryId.value,
-          type: recordType.value,
-          amount: numAmount,
-          remark: remark.value,
-          transaction_date: transactionDate.value
-        },
+        action: action,
+        data: requestData,
         openid: userStore.openid
       }
     })
@@ -361,7 +415,7 @@ const handleSubmit = async () => {
     if (res.result.code === 0) {
       // @ts-ignore
       uni.showToast({
-        title: '记账成功',
+        title: isEditMode.value ? '更新成功' : '记账成功',
         icon: 'success'
       })
 
@@ -373,15 +427,15 @@ const handleSubmit = async () => {
     } else {
       // @ts-ignore
       uni.showToast({
-        title: res.result.message || '记账失败',
+        title: res.result.message || (isEditMode.value ? '更新失败' : '记账失败'),
         icon: 'none'
       })
     }
   } catch (error) {
-    console.error('记账失败：', error)
+    console.error(isEditMode.value ? '更新失败：' : '记账失败：', error)
     // @ts-ignore
     uni.showToast({
-      title: '记账失败，请重试',
+      title: isEditMode.value ? '更新失败，请重试' : '记账失败，请重试',
       icon: 'none'
     })
   } finally {
@@ -392,7 +446,7 @@ const handleSubmit = async () => {
 /**
  * 页面加载
  */
-onMounted(() => {
+onMounted(async () => {
   // 从参数获取类型
   // @ts-ignore
   const pages = getCurrentPages()
@@ -401,15 +455,16 @@ onMounted(() => {
 
   if (options.type && (options.type === 'income' || options.type === 'expense')) {
     recordType.value = options.type
-  
-  // 处理编辑模式
-  if (options.mode === 'edit' && options.id) {
-    loadTransactionForEdit(options.id)
-  }
   }
 
-  loadCategories()
-  loadAccounts()
+  // 加载基础数据
+  await loadCategories()
+  await loadAccounts()
+
+  // 处理编辑模式 - 在加载分类和账户后执行
+  if (options.mode === 'edit' && options.id) {
+    await loadTransactionForEdit(options.id)
+  }
 })
 </script>
 
@@ -708,41 +763,3 @@ onMounted(() => {
 /**
  * 加载交易数据用于编辑
  */
-const loadTransactionForEdit = async (id: string) => {
-  try {
-    // @ts-ignore
-    const res = await uniCloud.callFunction({
-      name: 'transaction',
-      data: {
-        action: 'getById',
-        openid: userStore.openid,
-        data: { _id: id }
-      }
-    })
-
-    if (res.result.code === 0) {
-      const t = res.result.data
-      amount.value = String(t.amount)
-      recordType.value = t.type
-      selectedCategoryId.value = t.category_id
-      selectedCategoryName.value = t.categoryName
-      selectedCategoryIcon.value = t.categoryIcon || '📁'
-      selectedAccountId.value = t.account_id
-      selectedAccountName.value = t.accountName
-      remark.value = t.remark || ''
-      
-      // 设置日期
-      if (t.transaction_date) {
-        const date = new Date(t.transaction_date)
-        transactionDate.value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-      }
-    }
-  } catch (error) {
-    console.error('加载交易数据失败：', error)
-    // @ts-ignore
-    uni.showToast({
-      title: '加载失败',
-      icon: 'none'
-    })
-  }
-}
