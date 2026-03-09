@@ -147,7 +147,7 @@
         "本月支出显示正确",
         "本月结余 = 收入 - 支出"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
