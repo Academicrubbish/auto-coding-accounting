@@ -413,7 +413,7 @@
         "所有交易信息完整显示",
         "数据格式正确"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
@@ -436,7 +436,7 @@
         "修改后余额重新计算",
         "修改成功后返回详情"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
@@ -459,7 +459,7 @@
         "删除后账户余额恢复",
         "列表中不再显示该记录"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
@@ -611,7 +611,7 @@
         "新分类成功创建",
         "记账时可以选择新分类"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
@@ -631,7 +631,7 @@
       "test_criteria": [
         "编辑后信息正确更新"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
@@ -651,7 +651,7 @@
         "删除前有确认",
         "删除后分类不显示"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
@@ -671,7 +671,7 @@
         "系统分类名称不可修改",
         "系统分类不可删除"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
@@ -692,7 +692,7 @@
         "切换月份后数据正确",
         "收支统计数值准确"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
@@ -711,7 +711,7 @@
         "折线图正常渲染",
         "数据准确"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
@@ -731,7 +731,7 @@
         "饼图正常渲染",
         "点击可查看明细"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
