@@ -57,6 +57,7 @@ const userStore = useUserStore()
 // 状态
 const accounts = ref<any[]>([])
 const isLoading = ref(false)
+const hasLoadedOnce = ref(false)
 
 // 账户类型映射
 const typeMap: Record<string, string> = {
@@ -105,6 +106,7 @@ const loadAccounts = async () => {
 
     if (res.result.code === 0) {
       accounts.value = res.result.data || []
+      hasLoadedOnce.value = true
     }
   } catch (error) {
     console.error('加载账户失败：', error)
@@ -185,12 +187,18 @@ const handleDelete = (item: any) => {
  * 页面加载
  */
 onMounted(() => {
-  loadAccounts()
+  // 只在首次加载时执行，避免与 onShow 重复调用
+  if (!hasLoadedOnce.value) {
+    loadAccounts()
+  }
 })
 
 // 页面显示时刷新
 onShow(() => {
-  loadAccounts()
+  // 只在页面已经加载过一次后才刷新（从其他页面返回时）
+  if (hasLoadedOnce.value) {
+    loadAccounts()
+  }
 })
 </script>
 

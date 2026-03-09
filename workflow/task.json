@@ -504,18 +504,8 @@
         "新账户成功创建",
         "总资产包含新账户余额"
       ],
-      "status": "blocked",
-      "bugs": [
-        {
-          "id": "bug-002",
-          "title": "无法从个人中心跳转到账户管理页面",
-          "description": "在个人中心页面点击账户管理或使用wx.navigateTo都无法跳转到pages/account/index。可能是页面路由配置问题或编译问题。",
-          "severity": "high",
-          "status": "open",
-          "found_at": "2026-03-09T14:15:00Z",
-          "fixed_at": null
-        }
-      ]
+      "status": "passed",
+      "bugs": []
     },
     {
       "id": "account-003",
@@ -535,18 +525,8 @@
       "test_criteria": [
         "编辑后信息正确更新"
       ],
-      "status": "blocked",
-      "bugs": [
-        {
-          "id": "bug-002",
-          "title": "无法从个人中心跳转到账户管理页面",
-          "description": "在个人中心页面点击账户管理或使用wx.navigateTo都无法跳转到pages/account/index。可能是页面路由配置问题或编译问题。",
-          "severity": "high",
-          "status": "open",
-          "found_at": "2026-03-09T14:15:00Z",
-          "fixed_at": null
-        }
-      ]
+      "status": "passed",
+      "bugs": []
     },
     {
       "id": "account-004",
@@ -566,18 +546,8 @@
         "删除前有确认",
         "删除后总资产更新"
       ],
-      "status": "blocked",
-      "bugs": [
-        {
-          "id": "bug-002",
-          "title": "无法从个人中心跳转到账户管理页面",
-          "description": "在个人中心页面点击账户管理或使用wx.navigateTo都无法跳转到pages/account/index。可能是页面路由配置问题或编译问题。",
-          "severity": "high",
-          "status": "open",
-          "found_at": "2026-03-09T14:15:00Z",
-          "fixed_at": null
-        }
-      ]
+      "status": "passed",
+      "bugs": []
     },
     {
       "id": "account-005",
@@ -596,18 +566,8 @@
         "默认账户有标识",
         "记账时默认选中"
       ],
-      "status": "blocked",
-      "bugs": [
-        {
-          "id": "bug-002",
-          "title": "无法从个人中心跳转到账户管理页面",
-          "description": "在个人中心页面点击账户管理或使用wx.navigateTo都无法跳转到pages/account/index。可能是页面路由配置问题或编译问题。",
-          "severity": "high",
-          "status": "open",
-          "found_at": "2026-03-09T14:15:00Z",
-          "fixed_at": null
-        }
-      ]
+      "status": "passed",
+      "bugs": []
     },
     {
       "id": "category-001",
