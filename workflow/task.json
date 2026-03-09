@@ -309,7 +309,7 @@
         "未选账户时不能提交",
         "错误提示清晰明确"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
@@ -329,7 +329,7 @@
         "分组头部显示日期格式正确",
         "当日收支统计准确"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
