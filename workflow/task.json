@@ -479,7 +479,7 @@
         "所有账户正确显示",
         "总资产计算正确"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
