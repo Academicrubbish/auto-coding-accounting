@@ -123,6 +123,7 @@ const monthExpense = ref(0)
 const transactions = ref<any[]>([])
 const isLoadingStats = ref(false)
 const isLoadFailed = ref(false)
+const hasLoadedOnce = ref(false)
 
 // 是否已登录
 const isLoggedIn = computed(() => !!userStore.openid)
@@ -196,6 +197,7 @@ const loadStatsData = async () => {
       totalAssets.value = data.totalAssets || 0
       monthIncome.value = data.monthIncome || 0
       monthExpense.value = data.monthExpense || 0
+      hasLoadedOnce.value = true
     } else {
       console.error('加载首页统计数据失败：', res.result.message)
     }
@@ -320,7 +322,7 @@ watch(() => userStore.openid, (newOpenid) => {
 onMounted(() => {
   // 延迟加载，确保登录状态已恢复
   setTimeout(() => {
-    if (userStore.openid) {
+    if (userStore.openid && !hasLoadedOnce.value) {
       loadStatsData()
     }
   }, 500)
@@ -329,8 +331,8 @@ onMounted(() => {
 // 页面显示时刷新数据
 onShow(() => {
   console.log('首页 onShow 触发')
-  // 刷新统计数据和交易列表
-  if (userStore.openid) {
+  // 只在页面已经加载过一次后才刷新（从其他页面返回时）
+  if (userStore.openid && hasLoadedOnce.value) {
     loadStatsData()
     pagingRef.value?.reload()
   }

@@ -67,6 +67,7 @@ const userStore = useUserStore()
 const currentType = ref<'expense' | 'income'>('expense')
 const categories = ref<any[]>([])
 const isLoading = ref(false)
+const hasLoadedOnce = ref(false)
 
 /**
  * 切换类型
@@ -95,6 +96,7 @@ const loadCategories = async () => {
 
     if (res.result.code === 0) {
       categories.value = res.result.data || []
+      hasLoadedOnce.value = true
     }
   } catch (error) {
     console.error('加载分类失败：', error)
@@ -137,12 +139,18 @@ const handleEdit = (item: any) => {
  * 页面加载
  */
 onMounted(() => {
-  loadCategories()
+  // 只在首次加载时执行，避免与 onShow 重复调用
+  if (!hasLoadedOnce.value) {
+    loadCategories()
+  }
 })
 
 // 页面显示时刷新
 onShow(() => {
-  loadCategories()
+  // 只在页面已经加载过一次后才刷新（从其他页面返回时）
+  if (hasLoadedOnce.value) {
+    loadCategories()
+  }
 })
 </script>
 
