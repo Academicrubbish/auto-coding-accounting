@@ -504,8 +504,18 @@
         "新账户成功创建",
         "总资产包含新账户余额"
       ],
-      "status": "pending",
-      "bugs": []
+      "status": "blocked",
+      "bugs": [
+        {
+          "id": "bug-002",
+          "title": "无法从个人中心跳转到账户管理页面",
+          "description": "在个人中心页面点击账户管理或使用wx.navigateTo都无法跳转到pages/account/index。可能是页面路由配置问题或编译问题。",
+          "severity": "high",
+          "status": "open",
+          "found_at": "2026-03-09T14:15:00Z",
+          "fixed_at": null
+        }
+      ]
     },
     {
       "id": "account-003",
@@ -525,8 +535,18 @@
       "test_criteria": [
         "编辑后信息正确更新"
       ],
-      "status": "pending",
-      "bugs": []
+      "status": "blocked",
+      "bugs": [
+        {
+          "id": "bug-002",
+          "title": "无法从个人中心跳转到账户管理页面",
+          "description": "在个人中心页面点击账户管理或使用wx.navigateTo都无法跳转到pages/account/index。可能是页面路由配置问题或编译问题。",
+          "severity": "high",
+          "status": "open",
+          "found_at": "2026-03-09T14:15:00Z",
+          "fixed_at": null
+        }
+      ]
     },
     {
       "id": "account-004",
@@ -546,8 +566,18 @@
         "删除前有确认",
         "删除后总资产更新"
       ],
-      "status": "pending",
-      "bugs": []
+      "status": "blocked",
+      "bugs": [
+        {
+          "id": "bug-002",
+          "title": "无法从个人中心跳转到账户管理页面",
+          "description": "在个人中心页面点击账户管理或使用wx.navigateTo都无法跳转到pages/account/index。可能是页面路由配置问题或编译问题。",
+          "severity": "high",
+          "status": "open",
+          "found_at": "2026-03-09T14:15:00Z",
+          "fixed_at": null
+        }
+      ]
     },
     {
       "id": "account-005",
@@ -566,8 +596,18 @@
         "默认账户有标识",
         "记账时默认选中"
       ],
-      "status": "pending",
-      "bugs": []
+      "status": "blocked",
+      "bugs": [
+        {
+          "id": "bug-002",
+          "title": "无法从个人中心跳转到账户管理页面",
+          "description": "在个人中心页面点击账户管理或使用wx.navigateTo都无法跳转到pages/account/index。可能是页面路由配置问题或编译问题。",
+          "severity": "high",
+          "status": "open",
+          "found_at": "2026-03-09T14:15:00Z",
+          "fixed_at": null
+        }
+      ]
     },
     {
       "id": "category-001",
@@ -786,7 +826,7 @@
       "test_criteria": [
         "编辑后余额重新计算正确"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
@@ -805,7 +845,7 @@
       "test_criteria": [
         "删除后余额恢复正确"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
@@ -886,7 +926,7 @@
         "所有接口正常工作",
         "数据正确存储"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
@@ -905,7 +945,7 @@
         "正确返回用户+系统分类",
         "CRUD 操作正常"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
@@ -927,7 +967,7 @@
         "所有接口正常工作",
         "余额计算正确"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
@@ -946,7 +986,7 @@
         "统计数据准确",
         "聚合逻辑正确"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
