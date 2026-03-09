@@ -168,8 +168,18 @@
         "最新的交易在最上面",
         "点击可查看详情"
       ],
-      "status": "pending",
-      "bugs": []
+      "status": "blocked",
+      "bugs": [
+        {
+          "id": "block-001",
+          "title": "需要真实微信授权环境",
+          "description": "此场景需要微信授权登录后才能查看交易记录。微信开发者工具无法模拟真实的微信授权流程，需要真实微信环境才能完整测试。",
+          "severity": "medium",
+          "status": "open",
+          "found_at": "2026-03-10T01:30:00Z",
+          "fixed_at": null
+        }
+      ]
     },
     {
       "id": "home-004",
