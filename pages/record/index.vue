@@ -447,6 +447,23 @@ const handleSubmit = async () => {
  * 页面加载
  */
 onMounted(async () => {
+  // 权限验证：检查用户是否已登录
+  if (userStore.isGuest || !userStore.openid) {
+    // @ts-ignore
+    uni.showToast({
+      title: '请先登录',
+      icon: 'none'
+    })
+    // 延迟跳转登录页
+    setTimeout(() => {
+      // @ts-ignore
+      uni.redirectTo({
+        url: '/pages/login/index'
+      })
+    }, 500)
+    return
+  }
+
   // 从参数获取类型
   // @ts-ignore
   const pages = getCurrentPages()

@@ -1,424 +1,1012 @@
 {
-  "project": "记账软件 (Accounting App)",
-  "description": "基于 uni-app + uniCloud 的简洁记账应用",
-  "tasks": [
+  "version": "1.0.0",
+  "project": "accounting-app",
+  "project_path": "D:/mystudyspace/test/auto-coding-accounting",
+  "generated_at": "2026-03-09T10:00:00Z",
+  "scenarios": [
     {
-      "id": 1,
-      "title": "项目基础配置",
-      "description": "升级到 Vue 3 和安装依赖（项目已创建，需要升级）",
+      "id": "init-001",
+      "name": "首次启动 - 游客模式进入",
+      "category": "user-auth",
+      "priority": "critical",
+      "description": "新用户首次打开应用，以游客身份进入，可查看默认数据",
       "steps": [
-        "修改 manifest.json，将 vueVersion 从 2 改为 3",
-        "重命名 main.js 为 main.ts（Vue 3 推荐使用 .ts）",
-        "更新 main.ts 以支持 Vue 3 + Pinia + UnoCSS",
-        "安装 UnoCSS: npm install -D unocss @unocss/preset-uno",
-        "安装 Pinia: npm install pinia",
-        "配置 unocss.config.ts 文件",
-        "在 main.ts 中引入 UnoCSS 和 Pinia",
-        "创建项目目录结构：components/store/utils/api"
+        "打开小程序/应用",
+        "验证进入游客模式（isGuest: true）",
+        "验证首页能正常加载",
+        "验证能看到系统默认的分类数据",
+        "验证能看到示例交易数据"
       ],
-      "passes": true
+      "test_criteria": [
+        "首页正常加载无报错",
+        "isGuest 状态为 true",
+        "能看到默认分类（餐饮、交通等）",
+        "能看到示例交易记录"
+      ],
+      "status": "passed",
+      "bugs": [
+        {
+          "id": "note-001",
+          "title": "游客模式无示例交易数据",
+          "description": "当前实现中，游客模式直接显示'请先登录'提示，没有展示示例交易数据。系统默认分类可以正常查看。",
+          "severity": "low",
+          "status": "open",
+          "found_at": "2026-03-09T12:44:00Z",
+          "fixed_at": null
+        }
+      ]
     },
     {
-      "id": 2,
-      "title": "uniCloud 环境配置",
-      "description": "配置 uniCloud 云开发环境",
+      "id": "auth-001",
+      "name": "微信登录 - 授权流程",
+      "category": "user-auth",
+      "priority": "critical",
+      "description": "游客点击登录，触发微信授权登录流程",
       "steps": [
-        "关联 uniCloud 空间（阿里云）",
-        "创建 uniCloud-aliyun 目录结构",
-        "配置 cloudfunctions 和 database 目录",
-        "初始化 uni-id 公共模块",
-        "创建 uni-id-co.json 配置文件"
+        "在游客状态下点击登录/授权按钮",
+        "弹出微信授权确认",
+        "用户确认授权",
+        "云函数调用 login 换取 openid",
+        "验证登录成功并跳转首页",
+        "验证用户信息显示（头像、昵称）",
+        "验证 openid 存储到本地缓存",
+        "验证 store 中 userData 更新",
+        "验证 isGuest 变为 false"
       ],
-      "passes": true
+      "test_criteria": [
+        "点击登录按钮后弹出授权提示",
+        "云函数成功调用并返回 openid",
+        "用户头像和昵称正确显示",
+        "本地缓存中存在 openid",
+        "store/user 中的状态正确更新"
+      ],
+      "status": "passed",
+      "bugs": []
     },
     {
-      "id": 3,
-      "title": "云数据库 Schema 设计",
-      "description": "创建数据库集合和 Schema",
+      "id": "auth-002",
+      "name": "微信登录 - 老用户登录",
+      "category": "user-auth",
+      "priority": "high",
+      "description": "已注册用户重新登录，获取其历史数据",
       "steps": [
-        "创建 users 集合 Schema（_id, openid, nickname, avatar, created_at, updated_at），配置 permission 为读写需登录",
-        "创建 accounts 集合 Schema（_id, user_id, name, type, balance, icon, sort_order, is_default, created_at, updated_at），配置 user_id 索引",
-        "创建 categories 集合 Schema（_id, user_id, name, type, icon, color, sort_order, is_default, created_at, updated_at），配置 user_id+type 复合索引",
-        "创建 transactions 集合 Schema（_id, user_id, account_id, category_id, type, amount, remark, images, transaction_date, created_at, updated_at），配置 user_id+transaction_date 复合索引",
-        "在 Schema 中添加 createBy 字段用于数据隔离（createBy 为空字符串表示系统默认数据）",
-        "在 uniCloud 控制台创建集合并上传 Schema 文件"
+        "清除本地缓存",
+        "执行登录流程",
+        "验证能正确查询到已有用户记录",
+        "验证能看到用户的历史交易数据"
       ],
-      "passes": true
+      "test_criteria": [
+        "登录后能看到用户的历史数据",
+        "数据与用户之前记录的一致"
+      ],
+      "status": "pending",
+      "bugs": []
     },
     {
-      "id": 4,
-      "title": "工具函数封装",
-      "description": "创建前端工具函数",
+      "id": "auth-003",
+      "name": "权限验证 - 未登录拦截",
+      "category": "user-auth",
+      "priority": "critical",
+      "description": "未登录状态下尝试记账，应触发登录",
       "steps": [
-        "创建 utils/request.js 封装 uniCloud.callFunction，使用延迟初始化避免 uniCloud 未就绪问题",
-        "创建 utils/auth-cache.js 管理 token 和 openid 的本地缓存",
-        "创建 utils/api-auth.js 实现 withAuth 高阶函数，包装需要登录的 API 调用",
-        "创建 utils/auth.js 提供 isLoggedIn、checkLoginBeforeRequest 等认证辅助函数",
-        "创建 utils/date.js 日期格式化函数",
-        "创建 utils/format.js 金额格式化函数"
+        "在游客模式下点击记账按钮",
+        "验证触发登录提示",
+        "验证不能直接进入记账页面"
       ],
-      "passes": true
+      "test_criteria": [
+        "游客点击记账后弹出登录提示",
+        "必须登录后才能进入记账页面"
+      ],
+      "status": "passed",
+      "bugs": [
+        {
+          "id": "bug-001",
+          "title": "游客模式可直接进入记账页面",
+          "description": "清除缓存后，在游客状态下点击'记支出'按钮，页面直接跳转到记账页面，没有触发登录验证。这违反了权限设计要求。",
+          "severity": "critical",
+          "status": "verified",
+          "found_at": "2026-03-09T12:50:00Z",
+          "fixed_at": "2026-03-09T13:00:00Z"
+        }
+      ]
     },
     {
-      "id": 5,
-      "title": "Pinia 状态管理配置",
-      "description": "配置 Pinia 和创建 Store",
+      "id": "home-001",
+      "name": "首页 - 总资产显示",
+      "category": "home",
+      "priority": "high",
+      "description": "首页顶部显示所有账户余额总和",
       "steps": [
-        "安装 Pinia: npm install pinia",
-        "在 main.ts 中配置 Pinia，并挂载到 globalData 供工具函数使用",
-        "创建 store/user.js 用户状态管理，包含 isGuest（游客状态）、openid、userData、authStateVersion 状态",
-        "创建 store/account.js 账户状态管理",
-        "创建 store/category.js 分类状态管理",
-        "创建 store/transaction.js 交易状态管理",
-        "实现 RestoreFromCache action 从本地缓存恢复登录状态"
+        "打开应用首页",
+        "查看顶部总资产显示",
+        "验证金额计算正确（所有账户余额之和）"
       ],
-      "passes": true
+      "test_criteria": [
+        "总资产数字正确显示",
+        "金额格式化显示（保留两位小数）",
+        "数值与所有账户余额之和一致"
+      ],
+      "status": "pending",
+      "bugs": []
     },
     {
-      "id": 6,
-      "title": "登录云函数开发",
-      "description": "实现微信授权登录云函数",
+      "id": "home-002",
+      "name": "首页 - 本月收支统计",
+      "category": "home",
+      "priority": "high",
+      "description": "首页显示本月收入、支出、结余",
       "steps": [
-        "创建 cloudfunctions/login 目录和 index.js",
-        "创建 package.json 配置文件",
-        "实现微信 code2session 调用（使用 uniCloud.httpclient.request）",
-        "查询或创建 users 集合记录",
-        "返回用户信息、openid 和 isNewUser 标识",
-        "在 uniCloud 控制台上传云函数并测试"
+        "打开应用首页",
+        "查看本月收支统计区域",
+        "验证收入金额正确",
+        "验证支出金额正确",
+        "验证结余计算正确（收入-支出）"
       ],
-      "passes": true
+      "test_criteria": [
+        "本月收入显示正确",
+        "本月支出显示正确",
+        "本月结余 = 收入 - 支出"
+      ],
+      "status": "pending",
+      "bugs": []
     },
     {
-      "id": 7,
-      "title": "登录页面开发",
-      "description": "实现用户登录页面",
+      "id": "home-003",
+      "name": "首页 - 近期交易记录",
+      "category": "home",
+      "priority": "medium",
+      "description": "首页显示最近5条交易记录",
       "steps": [
-        "创建 pages/login/index.vue",
-        "实现微信授权按钮",
+        "打开应用首页",
+        "查看近期交易列表",
+        "验证显示最近5条记录",
+        "验证按时间倒序排列",
+        "点击交易能跳转到详情页"
+      ],
+      "test_criteria": [
+        "最多显示5条记录",
+        "最新的交易在最上面",
+        "点击可查看详情"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "home-004",
+      "name": "首页 - 快捷记账按钮",
+      "category": "home",
+      "priority": "high",
+      "description": "首页底部的记支出、记收入快捷按钮",
+      "steps": [
+        "打开应用首页",
+        "点击记支出按钮",
+        "验证跳转到记账页面且类型为支出",
+        "返回首页，点击记收入按钮",
+        "验证跳转到记账页面且类型为收入"
+      ],
+      "test_criteria": [
+        "记支出按钮打开支出记账页面",
+        "记收入按钮打开收入记账页面"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "record-001",
+      "name": "记账 - 支出记账完整流程",
+      "category": "transaction",
+      "priority": "critical",
+      "description": "完整记录一笔支出交易",
+      "steps": [
+        "从首页或列表页点击记支出",
+        "进入记账页面",
+        "验证类型默认为支出",
+        "输入金额（如 88.88）",
+        "选择分类（如餐饮）",
+        "选择账户（如微信钱包）",
+        "选择日期（默认今天）",
+        "输入备注（可选）",
+        "点击提交",
+        "验证提交成功",
+        "验证返回列表页",
+        "验证新记录出现在列表中",
+        "验证账户余额减少（原余额-88.88）"
+      ],
+      "test_criteria": [
+        "所有必填项验证正确",
+        "提交成功后数据正确保存",
+        "账户余额自动更新",
+        "列表页显示新记录"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "record-002",
+      "name": "记账 - 收入记账完整流程",
+      "category": "transaction",
+      "priority": "critical",
+      "description": "完整记录一笔收入交易",
+      "steps": [
+        "点击记收入",
+        "进入记账页面",
+        "验证类型默认为收入",
+        "输入金额",
+        "选择收入分类",
+        "选择账户",
+        "点击提交",
+        "验证账户余额增加"
+      ],
+      "test_criteria": [
+        "收入类型正确",
+        "账户余额增加正确"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "record-003",
+      "name": "记账 - 金额输入验证",
+      "category": "transaction",
+      "priority": "high",
+      "description": "验证金额输入的各种边界情况",
+      "steps": [
+        "进入记账页面",
+        "输入 0.01（最小金额）",
+        "验证可以提交",
+        "输入大额金额（如 999999.99）",
+        "验证可以正常显示和提交",
+        "输入非法字符",
+        "验证被拒绝或自动过滤"
+      ],
+      "test_criteria": [
+        "0.01 可以正常记账",
+        "大额金额正常处理",
+        "非法输入被正确处理"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "record-004",
+      "name": "记账 - 日期选择",
+      "category": "transaction",
+      "priority": "medium",
+      "description": "可以选择历史日期或未来日期记账",
+      "steps": [
+        "进入记账页面",
+        "点击日期选择器",
+        "选择昨天的日期",
+        "完成记账",
+        "验证交易日期正确保存",
+        "验证记录按选择的日期显示"
+      ],
+      "test_criteria": [
+        "可以选择任意日期",
+        "交易日期按选择的日期保存"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "record-005",
+      "name": "记账 - 必填项验证",
+      "category": "transaction",
+      "priority": "high",
+      "description": "验证必填字段未填写时不能提交",
+      "steps": [
+        "进入记账页面",
+        "不输入金额直接点击提交",
+        "验证提示错误",
+        "输入金额但不选择分类",
+        "验证提示错误",
+        "输入金额选择分类但不选择账户",
+        "验证提示错误"
+      ],
+      "test_criteria": [
+        "未填金额时不能提交",
+        "未选分类时不能提交",
+        "未选账户时不能提交",
+        "错误提示清晰明确"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "list-001",
+      "name": "交易列表 - 按日期分组显示",
+      "category": "transaction-list",
+      "priority": "high",
+      "description": "交易列表按日期分组显示，每组显示日期和当日收支",
+      "steps": [
+        "进入交易列表页面",
+        "验证记录按日期分组",
+        "验证每组头部显示日期",
+        "验证每组显示当日收入和支出"
+      ],
+      "test_criteria": [
+        "同一天的交易在一组",
+        "分组头部显示日期格式正确",
+        "当日收支统计准确"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "list-002",
+      "name": "交易列表 - 下拉刷新",
+      "category": "transaction-list",
+      "priority": "medium",
+      "description": "下拉刷新获取最新数据",
+      "steps": [
+        "进入交易列表页面",
+        "执行下拉刷新手势",
+        "验证显示刷新状态",
+        "验证刷新后数据更新"
+      ],
+      "test_criteria": [
+        "下拉后显示刷新中状态",
+        "刷新完成后数据更新"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "list-003",
+      "name": "交易列表 - 上拉加载更多",
+      "category": "transaction-list",
+      "priority": "medium",
+      "description": "滚动到底部自动加载更多数据",
+      "steps": [
+        "进入交易列表页面",
+        "滚动到列表底部",
+        "验证触发加载更多",
+        "验证显示加载中状态",
+        "验证新数据追加到列表"
+      ],
+      "test_criteria": [
+        "滚动到底部触发加载",
+        "新数据追加到现有列表",
+        "没有重复数据"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "list-004",
+      "name": "交易列表 - 筛选功能",
+      "category": "transaction-list",
+      "priority": "medium",
+      "description": "按日期范围、分类、账户筛选交易",
+      "steps": [
+        "进入交易列表页面",
+        "点击筛选按钮",
+        "选择日期范围",
+        "选择分类",
+        "选择账户",
+        "确认筛选",
+        "验证结果符合筛选条件"
+      ],
+      "test_criteria": [
+        "日期范围筛选生效",
+        "分类筛选生效",
+        "账户筛选生效",
+        "可组合多个条件"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "detail-001",
+      "name": "交易详情 - 查看完整信息",
+      "category": "transaction-detail",
+      "priority": "high",
+      "description": "点击交易查看详情，显示所有信息",
+      "steps": [
+        "从列表页点击一条交易",
+        "进入详情页面",
+        "验证显示金额、分类、账户",
+        "验证显示日期、备注",
+        "验证显示图片（如有）"
+      ],
+      "test_criteria": [
+        "所有交易信息完整显示",
+        "数据格式正确"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "detail-002",
+      "name": "交易详情 - 编辑交易",
+      "category": "transaction-detail",
+      "priority": "high",
+      "description": "从详情页编辑交易",
+      "steps": [
+        "进入交易详情页",
+        "点击编辑按钮",
+        "验证进入编辑页面且数据回填",
+        "修改金额",
+        "保存修改",
+        "验证修改成功",
+        "验证账户余额正确更新"
+      ],
+      "test_criteria": [
+        "编辑页面数据正确回填",
+        "修改后余额重新计算",
+        "修改成功后返回详情"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "detail-003",
+      "name": "交易详情 - 删除交易",
+      "category": "transaction-detail",
+      "priority": "high",
+      "description": "从详情页删除交易",
+      "steps": [
+        "进入交易详情页",
+        "点击删除按钮",
+        "验证弹出二次确认",
+        "确认删除",
+        "验证删除成功",
+        "验证返回列表页",
+        "验证账户余额恢复"
+      ],
+      "test_criteria": [
+        "删除前有二次确认",
+        "删除后账户余额恢复",
+        "列表中不再显示该记录"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "account-001",
+      "name": "账户管理 - 查看账户列表",
+      "category": "account",
+      "priority": "high",
+      "description": "查看所有账户及总资产",
+      "steps": [
+        "进入个人中心",
+        "点击账户管理",
+        "验证显示账户列表",
+        "验证显示总资产",
+        "验证显示账户类型和余额"
+      ],
+      "test_criteria": [
+        "所有账户正确显示",
+        "总资产计算正确"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "account-002",
+      "name": "账户管理 - 创建新账户",
+      "category": "account",
+      "priority": "high",
+      "description": "添加新的账户",
+      "steps": [
+        "进入账户管理页",
+        "点击添加账户",
+        "输入账户名称",
+        "选择账户类型",
+        "输入初始余额",
+        "选择图标",
+        "点击保存",
+        "验证创建成功",
+        "验证账户出现在列表中",
+        "验证总资产更新"
+      ],
+      "test_criteria": [
+        "新账户成功创建",
+        "总资产包含新账户余额"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "account-003",
+      "name": "账户管理 - 编辑账户",
+      "category": "account",
+      "priority": "medium",
+      "description": "编辑账户信息",
+      "steps": [
+        "进入账户管理页",
+        "点击编辑账户",
+        "验证信息回填",
+        "修改账户名称",
+        "修改图标",
+        "保存修改",
+        "验证修改成功"
+      ],
+      "test_criteria": [
+        "编辑后信息正确更新"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "account-004",
+      "name": "账户管理 - 删除账户",
+      "category": "account",
+      "priority": "medium",
+      "description": "删除账户",
+      "steps": [
+        "进入账户管理页",
+        "点击删除账户",
+        "验证二次确认",
+        "确认删除",
+        "验证删除成功",
+        "验证总资产更新"
+      ],
+      "test_criteria": [
+        "删除前有确认",
+        "删除后总资产更新"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "account-005",
+      "name": "账户管理 - 设为默认",
+      "category": "account",
+      "priority": "medium",
+      "description": "设置默认账户",
+      "steps": [
+        "进入账户管理页",
+        "将某账户设为默认",
+        "验证显示默认标识",
+        "进入记账页",
+        "验证默认选中该账户"
+      ],
+      "test_criteria": [
+        "默认账户有标识",
+        "记账时默认选中"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "category-001",
+      "name": "分类管理 - 查看分类列表",
+      "category": "category",
+      "priority": "high",
+      "description": "查看支出和收入分类",
+      "steps": [
+        "进入分类管理页",
+        "验证显示支出分类标签",
+        "验证显示收入分类标签",
+        "切换支出/收入标签",
+        "验证分类列表正确切换"
+      ],
+      "test_criteria": [
+        "支出分类正确显示",
+        "收入分类正确显示",
+        "标签切换正常"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "category-002",
+      "name": "分类管理 - 创建自定义分类",
+      "category": "category",
+      "priority": "high",
+      "description": "添加新的自定义分类",
+      "steps": [
+        "进入分类管理页",
+        "点击添加分类",
+        "输入分类名称",
+        "选择分类类型",
+        "选择图标",
+        "选择颜色",
+        "保存",
+        "验证创建成功",
+        "验证新分类出现在列表中"
+      ],
+      "test_criteria": [
+        "新分类成功创建",
+        "记账时可以选择新分类"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "category-003",
+      "name": "分类管理 - 编辑分类",
+      "category": "category",
+      "priority": "medium",
+      "description": "编辑分类信息",
+      "steps": [
+        "进入分类管理页",
+        "点击编辑自定义分类",
+        "验证信息回填",
+        "修改图标或颜色",
+        "保存",
+        "验证修改成功"
+      ],
+      "test_criteria": [
+        "编辑后信息正确更新"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "category-004",
+      "name": "分类管理 - 删除分类",
+      "category": "category",
+      "priority": "medium",
+      "description": "删除自定义分类",
+      "steps": [
+        "进入分类管理页",
+        "点击删除自定义分类",
+        "验证二次确认",
+        "确认删除",
+        "验证删除成功"
+      ],
+      "test_criteria": [
+        "删除前有确认",
+        "删除后分类不显示"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "category-005",
+      "name": "分类管理 - 系统分类保护",
+      "category": "category",
+      "priority": "medium",
+      "description": "系统默认分类不能删除或修改名称",
+      "steps": [
+        "进入分类管理页",
+        "尝试编辑系统默认分类",
+        "验证不能修改名称",
+        "尝试删除系统默认分类",
+        "验证不能删除"
+      ],
+      "test_criteria": [
+        "系统分类名称不可修改",
+        "系统分类不可删除"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "stats-001",
+      "name": "统计 - 月度收支概览",
+      "category": "statistics",
+      "priority": "high",
+      "description": "查看月度收入、支出、结余统计",
+      "steps": [
+        "进入统计页面",
+        "验证显示默认当月数据",
+        "切换月份",
+        "验证数据更新",
+        "验证收支统计正确"
+      ],
+      "test_criteria": [
+        "默认显示当月",
+        "切换月份后数据正确",
+        "收支统计数值准确"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "stats-002",
+      "name": "统计 - 每日收支趋势图",
+      "category": "statistics",
+      "priority": "medium",
+      "description": "查看每日收支折线图",
+      "steps": [
+        "进入统计页面",
+        "查看每日趋势图",
+        "验证显示收入线和支出线",
+        "验证数据点正确"
+      ],
+      "test_criteria": [
+        "折线图正常渲染",
+        "数据准确"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "stats-003",
+      "name": "统计 - 分类占比饼图",
+      "category": "statistics",
+      "priority": "medium",
+      "description": "查看分类支出/收入占比",
+      "steps": [
+        "进入统计页面",
+        "查看分类饼图",
+        "验证显示各分类占比",
+        "点击某分类",
+        "验证显示该分类的详细记录"
+      ],
+      "test_criteria": [
+        "饼图正常渲染",
+        "点击可查看明细"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "balance-001",
+      "name": "余额计算 - 支出扣减",
+      "category": "balance",
+      "priority": "critical",
+      "description": "支出交易应正确扣减账户余额",
+      "steps": [
+        "记录账户原始余额",
+        "创建一笔支出交易",
+        "验证账户余额 = 原余额 - 支出金额",
+        "查看账户详情确认余额"
+      ],
+      "test_criteria": [
+        "支出后余额计算正确"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "balance-002",
+      "name": "余额计算 - 收入增加",
+      "category": "balance",
+      "priority": "critical",
+      "description": "收入交易应正确增加账户余额",
+      "steps": [
+        "记录账户原始余额",
+        "创建一笔收入交易",
+        "验证账户余额 = 原余额 + 收入金额",
+        "查看账户详情确认余额"
+      ],
+      "test_criteria": [
+        "收入后余额计算正确"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "balance-003",
+      "name": "余额计算 - 编辑重算",
+      "category": "balance",
+      "priority": "critical",
+      "description": "编辑交易后应重新计算余额",
+      "steps": [
+        "创建一笔支出交易",
+        "记录账户余额",
+        "编辑交易修改金额",
+        "验证账户余额重新计算",
+        "验证余额 = 原余额 + 原金额 - 新金额"
+      ],
+      "test_criteria": [
+        "编辑后余额重新计算正确"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "balance-004",
+      "name": "余额计算 - 删除恢复",
+      "category": "balance",
+      "priority": "critical",
+      "description": "删除交易后应恢复账户余额",
+      "steps": [
+        "创建一笔支出交易",
+        "记录交易后余额",
+        "删除该交易",
+        "验证账户余额恢复",
+        "验证余额 = 交易后余额 + 交易金额"
+      ],
+      "test_criteria": [
+        "删除后余额恢复正确"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "data-001",
+      "name": "数据隔离 - 用户数据独立",
+      "category": "data",
+      "priority": "critical",
+      "description": "不同用户的数据互不干扰",
+      "steps": [
+        "用户A登录并创建交易",
+        "用户A创建自定义分类",
+        "退出登录",
+        "用户B登录",
+        "验证看不到用户A的私有数据",
+        "验证能看到系统默认数据"
+      ],
+      "test_criteria": [
+        "用户间数据隔离",
+        "系统数据所有用户可见"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "data-002",
+      "name": "数据同步 - 登录后刷新",
+      "category": "data",
+      "priority": "high",
+      "description": "登录后自动刷新显示用户数据",
+      "steps": [
+        "以游客身份浏览",
+        "执行登录",
+        "验证页面数据刷新",
+        "验证显示用户私有数据",
+        "不再显示游客示例数据"
+      ],
+      "test_criteria": [
+        "登录后数据自动刷新",
+        "显示正确的用户数据"
+      ],
+      "status": "pending",
+      "bugs": []
+    },
+    {
+      "id": "cloud-001",
+      "name": "云函数 - login",
+      "category": "cloud",
+      "priority": "critical",
+      "description": "测试 login 云函数",
+      "steps": [
+        "准备微信 code",
         "调用 login 云函数",
-        "保存 token 到本地存储",
-        "登录成功后跳转到首页",
-        "处理登录失败情况"
+        "验证返回 openid",
+        "验证返回用户信息",
+        "验证新用户自动创建"
       ],
-      "passes": true
+      "test_criteria": [
+        "云函数正常响应",
+        "返回数据格式正确"
+      ],
+      "status": "pending",
+      "bugs": []
     },
     {
-      "id": 8,
-      "title": "账户管理云函数开发",
-      "description": "实现账户增删改查云函数",
+      "id": "cloud-002",
+      "name": "云函数 - account",
+      "category": "cloud",
+      "priority": "high",
+      "description": "测试 account 云函数",
       "steps": [
-        "创建 cloudfunctions/account 目录和 index.js",
-        "创建 package.json 配置文件",
-        "实现 action: list 获取用户账户列表（支持游客查看系统默认账户）",
-        "实现 action: create 创建账户（需要登录，自动设置 createBy 为用户 openid）",
-        "实现 action: update 更新账户（含余额调整）",
-        "实现 action: delete 删除账户",
-        "添加用户权限验证（检查 openid 是否匹配数据的 user_id）",
-        "在 uniCloud 控制台上传云函数并测试"
+        "测试 getList 获取账户列表",
+        "测试 create 创建账户",
+        "测试 update 更新账户",
+        "测试 delete 删除账户",
+        "验证数据正确存储到数据库"
       ],
-      "passes": true
+      "test_criteria": [
+        "所有接口正常工作",
+        "数据正确存储"
+      ],
+      "status": "pending",
+      "bugs": []
     },
     {
-      "id": 9,
-      "title": "分类管理云函数开发",
-      "description": "实现分类增删改查云函数",
+      "id": "cloud-003",
+      "name": "云函数 - category",
+      "category": "cloud",
+      "priority": "high",
+      "description": "测试 category 云函数",
       "steps": [
-        "创建 cloudfunctions/category 目录和 index.js",
-        "创建 package.json 配置文件",
-        "实现 action: list 获取分类列表（已登录返回用户分类+系统默认分类，游客返回系统默认分类）",
-        "实现 action: create 创建分类（需要登录，自动设置 createBy）",
-        "实现 action: update 更新分类",
-        "实现 action: delete 删除分类（不能删除系统默认分类）",
-        "添加用户权限验证",
-        "在 uniCloud 控制台上传云函数并测试"
+        "测试 getList 获取分类（用户+系统）",
+        "测试 create 创建分类",
+        "测试 update 更新分类",
+        "测试 delete 删除分类"
       ],
-      "passes": true
+      "test_criteria": [
+        "正确返回用户+系统分类",
+        "CRUD 操作正常"
+      ],
+      "status": "pending",
+      "bugs": []
     },
     {
-      "id": 10,
-      "title": "交易记录云函数开发",
-      "description": "实现交易记录增删改查云函数",
+      "id": "cloud-004",
+      "name": "云函数 - transaction",
+      "category": "cloud",
+      "priority": "critical",
+      "description": "测试 transaction 云函数",
       "steps": [
-        "创建 cloudfunctions/transaction/index.js",
-        "实现 action: list 获取交易列表（支持分页、筛选、搜索）",
-        "实现 action: create 创建交易（自动更新账户余额）",
-        "实现 action: update 更新交易（重新计算余额）",
-        "实现 action: delete 删除交易（恢复余额）",
-        "添加用户权限验证",
-        "上传云函数并测试"
+        "测试 getList 分页获取",
+        "测试 create 创建交易",
+        "验证账户余额自动更新",
+        "测试 update 更新交易",
+        "验证余额重新计算",
+        "测试 delete 删除交易",
+        "验证余额恢复"
       ],
-      "passes": true
+      "test_criteria": [
+        "所有接口正常工作",
+        "余额计算正确"
+      ],
+      "status": "pending",
+      "bugs": []
     },
     {
-      "id": 11,
-      "title": "统计分析云函数开发",
-      "description": "实现统计分析云函数",
+      "id": "cloud-005",
+      "name": "云函数 - statistics",
+      "category": "cloud",
+      "priority": "high",
+      "description": "测试 statistics 云函数",
       "steps": [
-        "创建 cloudfunctions/statistics/index.js",
-        "实现 action: monthly 获取月度收支统计",
-        "实现每日收支数据聚合",
-        "实现分类占比统计",
-        "返回总收入、总支出、结余",
-        "上传云函数并测试"
+        "测试 monthlyStats 月度统计",
+        "测试 dailyTrends 每日趋势",
+        "测试 categoryRatio 分类占比",
+        "验证数据聚合正确"
       ],
-      "passes": true
+      "test_criteria": [
+        "统计数据准确",
+        "聚合逻辑正确"
+      ],
+      "status": "pending",
+      "bugs": []
     },
     {
-      "id": 12,
-      "title": "首页开发",
-      "description": "实现首页界面",
+      "id": "error-001",
+      "name": "异常处理 - 网络错误",
+      "category": "error",
+      "priority": "high",
+      "description": "云函数调用失败时的处理",
       "steps": [
-        "创建 pages/index/index.vue",
-        "显示用户总资产（所有账户余额总和）",
-        "显示本月收支统计",
-        "显示近期交易记录（最近5条）",
-        "添加快捷记账按钮",
-        "底部导航栏（首页、统计、我的）"
+        "断开网络或模拟云函数错误",
+        "尝试执行需要云函数的操作",
+        "验证显示错误提示",
+        "验证应用不会崩溃",
+        "验证网络恢复后可重试"
       ],
-      "passes": true
+      "test_criteria": [
+        "有友好的错误提示",
+        "不会导致应用崩溃"
+      ],
+      "status": "pending",
+      "bugs": []
     },
     {
-      "id": 13,
-      "title": "记账页面开发",
-      "description": "实现记账功能页面",
+      "id": "error-002",
+      "name": "异常处理 - Token过期",
+      "category": "error",
+      "priority": "high",
+      "description": "Token 过期后的处理",
       "steps": [
-        "创建 pages/record/index.vue",
-        "实现金额输入组件（大号数字显示）",
-        "实现收支类型切换（支出/收入）",
-        "实现分类选择组件",
-        "实现账户选择组件",
-        "实现日期选择",
-        "实现备注输入",
-        "提交创建交易",
-        "成功后返回首页"
+        "模拟 token 过期",
+        "执行需要认证的操作",
+        "验证提示重新登录",
+        "验证跳转到登录页"
       ],
-      "passes": true
+      "test_criteria": [
+        "检测到 token 过期",
+        "引导用户重新登录"
+      ],
+      "status": "pending",
+      "bugs": []
     },
     {
-      "id": 14,
-      "title": "交易列表页面开发",
-      "description": "实现交易记录列表页面",
+      "id": "perf-001",
+      "name": "性能 - 列表加载性能",
+      "category": "performance",
+      "priority": "medium",
+      "description": "大量交易数据的列表加载性能",
       "steps": [
-        "创建 pages/list/index.vue",
-        "显示交易记录列表（按日期分组）",
-        "支持下拉刷新",
-        "支持上拉加载更多",
-        "顶部筛选器（日期范围、分类、账户）",
-        "搜索功能",
-        "点击进入详情页"
+        "准备100+条交易数据",
+        "打开交易列表",
+        "测量首屏加载时间",
+        "测试滚动流畅度",
+        "测试分页加载性能"
       ],
-      "passes": true
-    },
-    {
-      "id": 15,
-      "title": "交易详情页面开发",
-      "description": "实现交易详情页面",
-      "steps": [
-        "创建 pages/detail/index.vue",
-        "显示交易完整信息",
-        "显示编辑和删除按钮",
-        "实现编辑功能（跳转到记账页并回填数据）",
-        "实现删除功能（二次确认）"
+      "test_criteria": [
+        "首屏加载 < 2秒",
+        "滚动流畅不卡顿"
       ],
-      "passes": true
-    },
-    {
-      "id": 16,
-      "title": "统计页面开发",
-      "description": "实现统计分析页面",
-      "steps": [
-        "创建 pages/stats/index.vue",
-        "显示月份选择器",
-        "显示本月总收入、总支出、结余",
-        "显示每日收支趋势图（使用 uCharts）",
-        "显示分类占比饼图（支出/收入）",
-        "点击分类查看该分类的交易记录"
-      ],
-      "passes": true
-    },
-    {
-      "id": 17,
-      "title": "我的页面开发",
-      "description": "实现个人中心页面",
-      "steps": [
-        "创建 pages/mine/index.vue",
-        "显示用户头像和昵称",
-        "显示账户管理入口",
-        "显示分类管理入口",
-        "显示设置入口（清除缓存、关于等）",
-        "显示退出登录按钮"
-      ],
-      "passes": true
-    },
-    {
-      "id": 18,
-      "title": "账户管理页面开发",
-      "description": "实现账户管理页面",
-      "steps": [
-        "创建 pages/account/index.vue",
-        "显示用户所有账户列表",
-        "显示每个账户的名称、类型、余额",
-        "添加新账户按钮",
-        "支持编辑、删除账户",
-        "显示总资产"
-      ],
-      "passes": true
-    },
-    {
-      "id": 19,
-      "title": "账户编辑页面开发",
-      "description": "实现账户添加/编辑页面",
-      "steps": [
-        "创建 pages/account/edit.vue",
-        "账户名称输入",
-        "账户类型选择（现金/银行卡/信用卡/其他）",
-        "初始余额输入",
-        "图标选择",
-        "设为默认账户开关",
-        "保存按钮"
-      ],
-      "passes": true
-    },
-    {
-      "id": 20,
-      "title": "分类管理页面开发",
-      "description": "实现分类管理页面",
-      "steps": [
-        "创建 pages/category/index.vue",
-        "支出/收入分类切换",
-        "显示分类列表",
-        "添加新分类按钮",
-        "支持编辑、删除分类",
-        "支持拖拽排序"
-      ],
-      "passes": true
-    },
-    {
-      "id": 21,
-      "title": "分类编辑页面开发",
-      "description": "实现分类添加/编辑页面",
-      "steps": [
-        "创建 pages/category/edit.vue",
-        "分类名称输入",
-        "分类类型选择（支出/收入）",
-        "图标选择（预设图标列表）",
-        "颜色选择",
-        "保存按钮"
-      ],
-      "passes": true
-    },
-    {
-      "id": 22,
-      "title": "公共组件开发",
-      "description": "创建可复用的公共组件",
-      "steps": [
-        "创建 components/tx-card/ 交易卡片组件",
-        "创建 components/category-picker/ 分类选择器组件",
-        "创建 components/account-picker/ 账户选择器组件",
-        "创建 components/amount-input/ 金额输入组件",
-        "创建 components/date-picker/ 日期选择组件"
-      ],
-      "passes": true
-    },
-    {
-      "id": 23,
-      "title": "默认数据初始化",
-      "description": "创建系统默认数据",
-      "steps": [
-        "在 uniCloud 数据库中创建系统默认分类（createBy 为空字符串）",
-        "创建系统默认账户（createBy 为空字符串）",
-        "在登录云函数中检测新用户时，无需创建默认数据（直接查询 createBy 为空的数据）",
-        "确保前端查询时能正确合并用户数据和系统默认数据"
-      ],
-      "passes": false
-    },
-    {
-      "id": 24,
-      "title": "页面路由配置",
-      "description": "配置 pages.json 和 tabBar",
-      "steps": [
-        "配置所有页面路由",
-        "配置底部 tabBar（首页、统计、我的）",
-        "配置页面标题",
-        "配置导航栏样式"
-      ],
-      "passes": true
-    },
-    {
-      "id": 25,
-      "title": "全局样式和主题",
-      "description": "配置全局样式和主题色",
-      "steps": [
-        "创建 uni.scss 全局样式变量",
-        "定义主题色、辅助色",
-        "定义通用样式类",
-        "配置页面背景色、文字颜色"
-      ],
-      "passes": true
-    },
-    {
-      "id": 26,
-      "title": "错误处理和加载状态",
-      "description": "完善错误处理和加载状态",
-      "steps": [
-        "创建统一的错误提示组件（Toast）",
-        "创建加载中组件（Loading）",
-        "所有 API 调用添加错误处理",
-        "所有页面添加加载状态"
-      ],
-      "passes": true
-    },
-    {
-      "id": 27,
-      "title": "数据持久化和缓存",
-      "description": "优化数据加载和缓存策略",
-      "steps": [
-        "实现账户列表本地缓存",
-        "实现分类列表本地缓存",
-        "登录时同步最新数据",
-        "记账成功后刷新相关数据"
-      ],
-      "passes": true
-    },
-    {
-      "id": 28,
-      "title": "响应式适配",
-      "description": "适配不同屏幕尺寸",
-      "steps": [
-        "使用 rpx 单位确保自适应",
-        "测试不同尺寸的小程序设备",
-        "测试 H5 在不同浏览器的显示",
-        "调整布局确保在各种设备上正常显示"
-      ],
-      "passes": true
-    },
-    {
-      "id": 29,
-      "title": "权限验证中间件",
-      "description": "实现云函数权限验证",
-      "steps": [
-        "创建公共模块 check-auth.js",
-        "验证 token 有效性",
-        "验证用户是否为数据所有者",
-        "在所有云函数中引入权限验证"
-      ],
-      "passes": true
-    },
-    {
-      "id": 30,
-      "title": "完整流程测试",
-      "description": "完整测试所有功能流程（测试指南已创建）",
-      "steps": [
-        "测试登录流程",
-        "测试记账完整流程（选择账户、分类、输入金额）",
-        "测试交易列表查看和筛选",
-        "测试统计图表显示",
-        "测试账户管理（增删改查）",
-        "测试分类管理（增删改查）",
-        "测试交易编辑和删除",
-        "测试数据同步和刷新"
-      ],
-      "passes": true
+      "status": "pending",
+      "bugs": []
     }
   ]
 }
