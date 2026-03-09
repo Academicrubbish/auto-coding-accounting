@@ -767,7 +767,7 @@
       "test_criteria": [
         "收入后余额计算正确"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
