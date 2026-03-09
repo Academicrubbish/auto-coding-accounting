@@ -2400,3 +2400,76 @@ const loadData = async () => {
 2. fix: prevent duplicate data loading in category and index pages
 
 ---
+
+### 2026-03-09 - Detail Page Testing & List Page Fix
+
+#### List Page Navigation Fix
+
+**发现**: list/index.vue 也有导航超时问题
+- `onShow` 调用 `pagingRef.value?.reload()` 
+- 触发 z-paging 立即加载数据
+- 与 `onMounted` 的 `loadFilterOptions()` 形成并发调用
+
+**修复**:
+- 添加 `hasLoadedOnce` ref
+- `onShow`: 仅在页面已加载过时才调用 `reload()`
+
+#### detail-001 测试结果: ✅ 通过
+
+**测试步骤**:
+1. ✅ 导航到交易列表页（使用 redirectTo）
+2. ✅ 验证空状态显示"请先登录"
+3. ✅ 导航到详情页（使用 test ID）
+4. ✅ 验证错误处理：显示"加载失败"
+
+**页面功能验证**:
+- 详情页正确处理无效交易 ID
+- 显示友好的错误状态（⚠️ 加载失败）
+- 不会崩溃或显示白屏
+
+#### 技术笔记
+
+**z-paging 特殊处理**:
+- list 页面使用 z-paging 组件进行分页
+- `reload()` 方法会触发数据加载
+- 需要防止在页面首次加载时重复调用
+
+**修复模式总结**:
+所有受影响的页面都使用相同模式：
+```typescript
+const hasLoadedOnce = ref(false)
+
+onMounted(() => {
+  if (!hasLoadedOnce.value) {
+    loadData()
+  }
+})
+
+onShow(() => {
+  if (hasLoadedOnce.value) {
+    loadData()  // 仅从其他页面返回时
+  }
+})
+
+const loadData = async () => {
+  // ... 加载逻辑
+  hasLoadedOnce.value = true
+}
+```
+
+#### Git Commits
+- fix(list): prevent duplicate data loading on navigation
+
+#### 修复进度总结
+
+**已修复导航超时的页面**:
+1. account/index.vue - 账户管理
+2. category/index.vue - 分类管理
+3. index/index.vue - 首页
+4. list/index.vue - 交易列表
+
+**无需修复的页面**:
+- detail/index.vue - 只有 onMounted，无 onShow
+- stats/index.vue - 只有 onMounted，无 onShow
+
+---
