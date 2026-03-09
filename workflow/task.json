@@ -749,7 +749,7 @@
       "test_criteria": [
         "支出后余额计算正确"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
