@@ -264,7 +264,7 @@
         "大额金额正常处理",
         "非法输入被正确处理"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
