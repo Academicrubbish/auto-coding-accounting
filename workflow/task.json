@@ -241,7 +241,7 @@
         "收入类型正确",
         "账户余额增加正确"
       ],
-      "status": "pending",
+      "status": "passed",
       "bugs": []
     },
     {
