@@ -253,6 +253,7 @@ const pagingRef = ref()
 // 状态
 const transactions = ref<any[]>([])
 const isLoadFailed = ref(false)
+const hasLoadedOnce = ref(false)
 
 // 分页
 const pageSize = 20
@@ -596,6 +597,9 @@ const loadFilterOptions = async () => {
   } catch (error) {
     console.error('加载账户失败：', error)
   }
+
+  // 标记已加载一次
+  hasLoadedOnce.value = true
 }
 
 /**
@@ -608,8 +612,13 @@ onMounted(() => {
 // 页面显示时刷新数据
 onShow(() => {
   console.log('交易列表 onShow 触发')
-  // 刷新列表
-  pagingRef.value?.reload()
+  // 只在页面已经加载过一次后才刷新（从其他页面返回时）
+  if (hasLoadedOnce.value) {
+    // 刷新列表
+    pagingRef.value?.reload()
+  } else {
+    hasLoadedOnce.value = true
+  }
 })
 </script>
 
