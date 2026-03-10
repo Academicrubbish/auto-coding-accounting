@@ -9,3 +9,6 @@ uniCloud-aliyun/cloudfunctions/
 # 保留数据库 Schema 文件
 !uniCloud-aliyun/database/
 uniCloud-aliyun/database/node_modules/
+
+.claude
+nul

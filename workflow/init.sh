@@ -1,250 +1,96 @@
 #!/bin/bash
+# ==============================================
+# 记账小程序 - 自动化 Debug 工作流初始化脚本
+# ==============================================
+# 基于 Anthropic "Effective Harnesses for Long-Running Agents" 设计理念
+#
+# 用途：初始化测试环境，验证被测试应用存在
+# ==============================================
 
-# 记账软件 - 项目初始化/升级脚本
-# 此脚本将升级现有的 uni-app 项目到 Vue 3 + UnoCSS + Pinia
+set -e  # 遇到错误立即退出
 
-set -e  # 遇到错误时退出
+# 颜色定义
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-echo "========================================"
-echo "  记账软件 - 项目升级"
-echo "========================================"
+# 项目路径配置
+WORKFLOW_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ACCOUNT_APP_DIR="D:/mystudyspace/test/auto-coding-accounting/account-app"
+
+echo -e "${BLUE}============================================${NC}"
+echo -e "${BLUE}  记账小程序 - 自动化 Debug 工作流${NC}"
+echo -e "${BLUE}============================================${NC}"
 echo ""
 
-# 检查是否在正确的目录（workflow 目录）
-if [ ! -f "task.json" ]; then
-    echo "❌ 错误：请在 workflow 目录中运行此脚本"
+# Step 1: 确认工作目录
+echo -e "${GREEN}[1/5]${NC} 确认工作目录..."
+pwd
+echo ""
+
+# Step 2: 验证被测试应用存在
+echo -e "${GREEN}[2/5]${NC} 验证被测试应用..."
+if [ ! -d "$ACCOUNT_APP_DIR" ]; then
+    echo -e "${RED}❌ 错误: 被测试应用目录不存在${NC}"
+    echo -e "   路径: $ACCOUNT_APP_DIR"
     exit 1
 fi
+echo -e "${GREEN}✓${NC} 被测试应用目录存在"
+echo ""
 
-# 检查父目录是否是项目根目录
-if [ ! -f "../manifest.json" ]; then
-    echo "❌ 错误：未找到项目根目录（manifest.json）"
-    exit 1
+# Step 3: 切换到应用目录
+echo -e "${GREEN}[3/5]${NC} 切换到应用目录..."
+cd "$ACCOUNT_APP_DIR"
+echo -e "${GREEN}✓${NC} 当前目录: $(pwd)"
+echo ""
+
+# Step 4: 安装依赖（如需要）
+echo -e "${GREEN}[4/5]${NC} 检查依赖..."
+if [ ! -d "node_modules" ]; then
+    echo -e "${YELLOW}📦 安装依赖...${NC}"
+    npm install
+    echo -e "${GREEN}✓${NC} 依赖安装完成"
+else
+    echo -e "${GREEN}✓${NC} 依赖已存在，跳过安装"
 fi
-
-echo "📋 当前项目状态："
-echo "  - uni-app 项目: ✅ 已创建"
-echo "  - uniCloud 空间: ✅ 已关联"
-echo "  - 微信小程序 AppID: ✅ 已配置"
-echo "  - Vue 版本: ⚠️  需要升级到 Vue 3"
-echo "  - UnoCSS: ❌ 未安装"
-echo "  - Pinia: ❌ 未安装"
 echo ""
 
-# 询问是否继续
-read -p "是否开始升级？(Y/n): " -n 1 -r
-echo ""
-if [[ $REPLY =~ ^[Nn]$ ]]; then
-    echo "❌ 取消升级"
-    exit 0
-fi
+# Step 5: 检查必要文件
+echo -e "${GREEN}[5/5]${NC} 检查工作流文件..."
+cd "$WORKFLOW_DIR"
 
-echo ""
-echo "📦 开始升级项目..."
-echo ""
+WORKFLOW_FILES=("task.json" "CLAUDE.md" "progress.txt")
+ALL_FILES_EXIST=true
 
-# 切换到项目根目录
-cd ..
-
-# Step 1: 升级到 Vue 3
-echo "🔄 Step 1: 升级到 Vue 3..."
-if grep -q '"vueVersion" : "2"' manifest.json; then
-    echo "  修改 manifest.json，设置 vueVersion 为 3"
-    # macOS 和 Linux 的 sed 语法不同
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        sed -i '' 's/"vueVersion" : "2"/"vueVersion" : "3"/g' manifest.json
-    else
-        sed -i 's/"vueVersion" : "2"/"vueVersion" : "3"/g' manifest.json
+for file in "${WORKFLOW_FILES[@]}"; do
+    if [ ! -f "$file" ]; then
+        echo -e "${YELLOW}⚠${NC}  文件不存在: $file"
+        ALL_FILES_EXIST=false
     fi
-    echo "  ✅ Vue 3 升级完成"
-elif grep -q '"vueVersion" : "3"' manifest.json; then
-    echo "  ✅ 已经是 Vue 3"
+done
+
+if [ "$ALL_FILES_EXIST" = true ]; then
+    echo -e "${GREEN}✓${NC} 所有工作流文件已就绪"
 else
-    echo "  ⚠️  未找到 vueVersion 配置"
+    echo -e "${YELLOW}⚠${NC}  部分工作流文件缺失，请运行 Initializer Agent"
 fi
 echo ""
 
-# Step 2: 重命名 main.js 为 main.ts
-echo "🔄 Step 2: 重命名 main.js 为 main.ts..."
-if [ -f "main.js" ] && [ ! -f "main.ts" ]; then
-    mv main.js main.ts
-    echo "  ✅ main.js 已重命名为 main.ts"
-elif [ -f "main.ts" ]; then
-    echo "  ✅ main.ts 已存在"
-else
-    echo "  ⚠️  main.js 不存在"
-fi
+# 完成
+echo -e "${BLUE}============================================${NC}"
+echo -e "${GREEN}✅ 初始化完成！${NC}"
+echo -e "${BLUE}============================================${NC}"
 echo ""
-
-# Step 3: 安装依赖
-echo "🔄 Step 3: 安装依赖..."
-echo "  安装 UnoCSS..."
-npm install -D unocss @unocss/preset-uno
-
-echo "  安装 Pinia..."
-npm install pinia
-
-echo "  ✅ 依赖安装完成"
+echo -e "${YELLOW}📝 下一步操作：${NC}"
+echo -e "   1. 阅读 CLAUDE.md 了解工作流程"
+echo -e "   2. 查看 task.json 选择测试场景"
+echo -e "   3. 查看 progress.txt 了解当前进度"
+echo -e "   4. 启动 Debug Agent 开始测试"
 echo ""
-
-# Step 4: 创建目录结构
-echo "🔄 Step 4: 创建目录结构..."
-mkdir -p components store utils api
-echo "  ✅ 目录结构已创建（components/store/utils/api）"
-echo ""
-
-# Step 5: 配置 UnoCSS
-echo "🔄 Step 5: 配置 UnoCSS..."
-cat > unocss.config.ts << 'EOF'
-import { defineConfig } from 'unocss'
-import presetUno from '@unocss/preset-uno'
-
-export default defineConfig({
-  presets: [
-    presetUno(),
-  ],
-  shortcuts: {
-    'flex-center': 'flex items-center justify-center',
-    'flex-between': 'flex items-center justify-between',
-    'text-ellipsis': 'truncate overflow-hidden whitespace-nowrap',
-  },
-  theme: {
-    colors: {
-      primary: {
-        DEFAULT: '#3B82F6',
-        light: '#60A5FA',
-        dark: '#2563EB'
-      }
-    }
-  }
-})
-EOF
-echo "  ✅ unocss.config.ts 已创建"
-echo ""
-
-# Step 6: 更新 main.ts
-echo "🔄 Step 6: 更新 main.ts..."
-cat > main.ts << 'EOF'
-import { createSSRApp } from 'vue'
-import App from './App.vue'
-
-// UnoCSS
-import 'uno.css'
-import 'virtual:uno.css'
-
-// Pinia
-import { createPinia } from 'pinia'
-
-export function createApp() {
-  const app = createSSRApp(App)
-  const pinia = createPinia()
-
-  app.use(pinia)
-
-  // 挂载到 globalData 供工具函数使用
-  // @ts-ignore
-  if (typeof getApp !== 'undefined') {
-    // @ts-ignore
-    const globalApp = getApp()
-    if (globalApp && !globalApp.globalData) {
-      // @ts-ignore
-      globalApp.globalData = {}
-    }
-    if (globalApp && globalApp.globalData) {
-      // @ts-ignore
-      globalApp.globalData.store = pinia
-    }
-  }
-
-  return {
-    app
-  }
-}
-EOF
-echo "  ✅ main.ts 已更新"
-echo ""
-
-# Step 7: 创建 Pinia store
-echo "🔄 Step 7: 创建 Pinia store..."
-cat > store/user.ts << 'EOF'
-import { defineStore } from 'pinia'
-
-export const useUserStore = defineStore('user', {
-  state: () => ({
-    openid: '',
-    userData: {} as any,
-    isGuest: true,
-    authStateVersion: 0
-  }),
-
-  getters: {
-    isLoggedIn: (state) => !state.isGuest && !!state.openid
-  },
-
-  actions: {
-    setOpenid(openid: string) {
-      this.openid = openid
-    },
-    setUserData(userData: any) {
-      this.userData = userData
-    },
-    setIsGuest(isGuest: boolean) {
-      const wasGuest = this.isGuest
-      this.isGuest = isGuest
-      if (wasGuest === true && isGuest === false) {
-        this.authStateVersion += 1
-      }
-    },
-    async RestoreFromCache() {
-      try {
-        // @ts-ignore
-        const cachedOpenid = uni.getStorageSync('openid')
-        if (cachedOpenid) {
-          this.setOpenid(cachedOpenid)
-          this.setIsGuest(false)
-          return true
-        }
-      } catch (e) {
-        console.error('恢复登录状态失败', e)
-      }
-      return false
-    }
-  }
-})
-EOF
-echo "  ✅ store/user.ts 已创建"
-echo ""
-
-# Step 8: 创建 .env 模板
-echo "🔄 Step 8: 创建 .env 模板..."
-cat > .env.example << 'EOF'
-# 微信小程序配置（已配置，请勿修改）
-MP_APP_ID=wx07932ea2cbbef4c2
-MP_SECRET=your_mini_program_secret
-
-# uniCloud 配置（已关联阿里云空间）
-UNICLOUD_SPACE=aliyun
-EOF
-echo "  ✅ .env.example 已创建"
-echo ""
-
-echo "========================================"
-echo "  升级完成！"
-echo "========================================"
-echo ""
-echo "✅ 已完成："
-echo "  - Vue 2 → Vue 3 升级"
-echo "  - main.js → main.ts"
-echo "  - UnoCSS 安装和配置"
-echo "  - Pinia 安装和配置"
-echo "  - store/user.ts 创建"
-echo "  - 目录结构创建（components/store/utils/api）"
-echo ""
-echo "📋 下一步："
-echo "  1. 运行 npm run dev:mp-weixin 启动小程序开发"
-echo "  2. 在 workflow 目录启动 AI 开发工作流"
-echo ""
-echo "开发命令："
-echo "  小程序开发：npm run dev:mp-weixin"
-echo "  H5 开发：   npm run dev:h5"
+echo -e "${YELLOW}🔧 启动开发服务器：${NC}"
+echo -e "   cd $ACCOUNT_APP_DIR"
+echo -e "   npm run dev:mp-weixin  # 小程序"
+echo -e "   npm run dev:h5         # H5"
 echo ""
