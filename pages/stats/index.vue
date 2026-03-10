@@ -32,10 +32,25 @@
       </view>
     </view>
 
-    <!-- 每日趋势 -->
-    <view class="trend-section">
+    <!-- 收支比例环形图 -->
+    <view class="chart-section">
       <view class="section-header">
-        <text class="section-title">每日收支</text>
+        <text class="section-title">收支比例</text>
+      </view>
+      <view class="ring-chart-container">
+        <qiun-data-charts
+          type="ring"
+          :opts="ringOpts"
+          :chartData="ringChartData"
+          :canvas2d="true"
+        />
+      </view>
+    </view>
+
+    <!-- 每日趋势折线图 -->
+    <view class="chart-section">
+      <view class="section-header">
+        <text class="section-title">每日收支趋势</text>
         <view class="type-toggle">
           <view
             class="toggle-item"
@@ -60,42 +75,18 @@
           </view>
         </view>
       </view>
-
-      <!-- 简单柱状图 -->
-      <scroll-view class="trend-chart" scroll-x>
-        <view class="chart-container" v-if="dailyData.length > 0">
-          <view
-            class="chart-bar"
-            v-for="item in dailyData"
-            :key="item.date"
-          >
-            <view class="bar-wrapper">
-              <view
-                class="bar income-bar"
-                :style="{ height: getBarHeight(item.income, maxIncome) }"
-                v-if="trendType === 'all' || trendType === 'income'"
-              >
-                <text class="bar-amount" v-if="item.income > 0">{{ formatMoney(item.income) }}</text>
-              </view>
-              <view
-                class="bar expense-bar"
-                :style="{ height: getBarHeight(item.expense, maxExpense) }"
-                v-if="trendType === 'all' || trendType === 'expense'"
-              >
-                <text class="bar-amount" v-if="item.expense > 0">{{ formatMoney(item.expense) }}</text>
-              </view>
-            </view>
-            <text class="bar-label">{{ formatDayLabel(item.date) }}</text>
-          </view>
-        </view>
-        <view class="chart-empty" v-else>
-          <text class="empty-text">暂无数据</text>
-        </view>
-      </scroll-view>
+      <view class="line-chart-container">
+        <qiun-data-charts
+          type="line"
+          :opts="lineOpts"
+          :chartData="lineChartData"
+          :canvas2d="true"
+        />
+      </view>
     </view>
 
-    <!-- 分类统计 -->
-    <view class="category-section">
+    <!-- 分类统计饼图 -->
+    <view class="chart-section">
       <view class="section-header">
         <text class="section-title">分类统计</text>
         <view class="type-toggle">
@@ -115,7 +106,14 @@
           </view>
         </view>
       </view>
-
+      <view class="pie-chart-container">
+        <qiun-data-charts
+          type="pie"
+          :opts="pieOpts"
+          :chartData="pieChartData"
+          :canvas2d="true"
+        />
+      </view>
       <!-- 分类列表 -->
       <view class="category-list" v-if="categoryData.length > 0">
         <view
@@ -125,23 +123,16 @@
         >
           <view class="category-left">
             <text class="category-icon" :style="{ background: getCategoryColor(index) }">
-              {{ item.icon || '📁' }}
+              {{ item.categoryIcon || '📁' }}
             </text>
-            <text class="category-name">{{ item.name }}</text>
+            <text class="category-name">{{ item.categoryName }}</text>
           </view>
           <view class="category-right">
             <text class="category-amount">¥{{ formatMoney(item.amount) }}</text>
-            <view class="category-progress">
-              <view
-                class="progress-bar"
-                :style="{ width: item.percentage + '%', background: getCategoryColor(index) }"
-              ></view>
-            </view>
             <text class="category-percent">{{ item.percentage }}%</text>
           </view>
         </view>
       </view>
-
       <view class="category-empty" v-else>
         <text class="empty-icon">📊</text>
         <text class="empty-text">暂无{{ categoryType === 'expense' ? '支出' : '收入' }}数据</text>
@@ -177,7 +168,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '../../store/user'
 
 const userStore = useUserStore()
@@ -195,6 +187,9 @@ const trendType = ref('all')
 const categoryType = ref('expense')
 const showMonthPicker = ref(false)
 
+// 图表颜色
+const chartColors = ['#667eea', '#51cf66', '#ff6b6b', '#ffd93d', '#6bcf7f', '#4ecdc4', '#ff9f43', '#54a0ff']
+
 // 日期选择器
 const years = computed(() => {
   const currentYear = new Date().getFullYear()
@@ -203,20 +198,151 @@ const years = computed(() => {
 const months = computed(() => Array.from({ length: 12 }, (_, i) => i + 1))
 const monthPickerValue = ref([2, new Date().getMonth() + 1])
 
-// 计算最大值用于图表
-const maxIncome = computed(() => {
-  const max = Math.max(...dailyData.value.map(d => d.income))
-  return max || 100
-})
-const maxExpense = computed(() => {
-  const max = Math.max(...dailyData.value.map(d => d.expense))
-  return max || 100
-})
-
 // 是否是当前月份
 const isCurrentMonth = computed(() => {
   const now = new Date()
   return currentYear.value === now.getFullYear() && currentMonth.value === now.getMonth() + 1
+})
+
+/**
+ * 环形图配置 - 收支比例
+ */
+const ringOpts = computed(() => ({
+  color: chartColors,
+  padding: [5, 5, 5, 5],
+  enableScroll: false,
+  legend: {
+    show: true,
+    position: 'right',
+    itemGap: 16,
+    fontSize: 26,
+  },
+  extra: {
+    ring: {
+      ringWidth: 30,
+      activeOpacity: 0.5,
+      activeRadius: 10,
+      offsetAngle: 0,
+      labelWidth: 10,
+      border: true,
+      borderWidth: 2,
+      borderColor: '#FFFFFF'
+    }
+  },
+  dataLabel: false,
+  dataPointShape: false
+}))
+
+const ringChartData = computed(() => {
+  if (monthIncome.value === 0 && monthExpense.value === 0) {
+    return { series: [] }
+  }
+  // 格式化数字，避免浮点数精度问题
+  return {
+    series: [{
+      data: [
+        { name: '收入', value: Number(monthIncome.value.toFixed(2)) },
+        { name: '支出', value: Number(monthExpense.value.toFixed(2)) }
+      ]
+    }]
+  }
+})
+
+/**
+ * 折线图配置 - 每日趋势
+ */
+const lineOpts = computed(() => ({
+  color: chartColors,
+  padding: [15, 10, 0, 15],
+  enableScroll: false,
+  legend: {
+    show: trendType.value === 'all'
+  },
+  xAxis: {
+    disableGrid: true
+  },
+  yAxis: {
+    gridType: 'dash',
+    dashLength: 2,
+    data: [{ min: 0 }]
+  },
+  extra: {
+    line: {
+      type: 'curve',
+      width: 2,
+      activeType: 'hollow'
+    }
+  }
+}))
+
+const lineChartData = computed(() => {
+  if (dailyData.value.length === 0) {
+    return { categories: [], series: [] }
+  }
+
+  const categories = dailyData.value.map(d => {
+    const date = new Date(d.date)
+    return `${date.getMonth() + 1}/${date.getDate()}`
+  })
+
+  // 格式化数字，避免浮点数精度问题
+  const formatNum = (num: number) => Number(num.toFixed(2))
+
+  const series: any[] = []
+
+  if (trendType.value === 'all' || trendType.value === 'income') {
+    series.push({
+      name: '收入',
+      data: dailyData.value.map(d => formatNum(d.income))
+    })
+  }
+
+  if (trendType.value === 'all' || trendType.value === 'expense') {
+    series.push({
+      name: '支出',
+      data: dailyData.value.map(d => formatNum(d.expense))
+    })
+  }
+
+  return { categories, series }
+})
+
+/**
+ * 饼图配置 - 分类统计
+ */
+const pieOpts = computed(() => ({
+  color: chartColors,
+  padding: [5, 5, 5, 5],
+  enableScroll: false,
+  extra: {
+    pie: {
+      activeOpacity: 0.5,
+      activeRadius: 10,
+      offsetAngle: 0,
+      labelWidth: 10,
+      ringWidth: 30,
+      border: true,
+      borderWidth: 2,
+      borderColor: '#FFFFFF'
+    }
+  },
+  dataLabel: false,
+  dataPointShape: false
+}))
+
+const pieChartData = computed(() => {
+  if (categoryData.value.length === 0) {
+    return { series: [] }
+  }
+  // 格式化数字，避免浮点数精度问题
+  return {
+    series: [{
+      data: categoryData.value.map(item => ({
+        name: item.categoryName,
+        value: Number(item.amount.toFixed(2))
+      }))
+    }]
+  }
 })
 
 /**
@@ -227,28 +353,10 @@ const formatMoney = (val: number) => {
 }
 
 /**
- * 格式化日期标签
- */
-const formatDayLabel = (dateStr: string) => {
-  const date = new Date(dateStr)
-  return `${date.getMonth() + 1}/${date.getDate()}`
-}
-
-/**
- * 获取柱状图高度
- */
-const getBarHeight = (value: number, max: number) => {
-  if (max === 0) return '0%'
-  const height = (value / max) * 100
-  return Math.max(height, 0) + '%'
-}
-
-/**
  * 获取分类颜色
  */
 const getCategoryColor = (index: number) => {
-  const colors = ['#667eea', '#51cf66', '#ff6b6b', '#ffd93d', '#6bcf7f', '#4ecdc4', '#ff9f43', '#54a0ff']
-  return colors[index % colors.length]
+  return chartColors[index % chartColors.length]
 }
 
 /**
@@ -354,9 +462,10 @@ const loadMonthlyData = async () => {
  */
 const loadCategoryData = async () => {
   try {
-    // 计算月份起止日期
+    // 计算月份起止日期 - 使用正确的最后一天计算
+    const lastDay = new Date(currentYear.value, currentMonth.value, 0).getDate()
     const startDate = `${currentYear.value}-${String(currentMonth.value).padStart(2, '0')}-01`
-    const endDate = `${currentYear.value}-${String(currentMonth.value).padStart(2, '0')}-31`
+    const endDate = `${currentYear.value}-${String(currentMonth.value).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
 
     // @ts-ignore
     const res = await uniCloud.callFunction({
@@ -390,12 +499,53 @@ const loadCategoryData = async () => {
 onMounted(() => {
   loadMonthlyData()
 })
+
+// 页面显示时检查登录状态并刷新数据
+onShow(() => {
+  if (!userStore.openid) {
+    // 未登录，清空数据
+    monthIncome.value = 0
+    monthExpense.value = 0
+    monthBalance.value = 0
+    dailyData.value = []
+    categoryData.value = []
+  } else {
+    // 已登录，刷新数据
+    loadMonthlyData()
+  }
+})
+
+// 监听登录状态变化
+watch(() => userStore.openid, (newOpenid) => {
+  if (newOpenid) {
+    // 已登录，加载数据
+    loadMonthlyData()
+  } else {
+    // 退出登录，清空数据
+    monthIncome.value = 0
+    monthExpense.value = 0
+    monthBalance.value = 0
+    dailyData.value = []
+    categoryData.value = []
+  }
+})
+
+// 监听登录状态版本变化
+watch(() => userStore.authStateVersion, () => {
+  if (!userStore.openid) {
+    monthIncome.value = 0
+    monthExpense.value = 0
+    monthBalance.value = 0
+    dailyData.value = []
+    categoryData.value = []
+  }
+})
 </script>
 
 <style scoped>
 .stats-container {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: #f7f8fa;
   padding-bottom: 40rpx;
 }
 
@@ -415,7 +565,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
+  background: #f7f8fa;
   border-radius: 50%;
 }
 
@@ -433,7 +583,7 @@ onMounted(() => {
   align-items: center;
   gap: 10rpx;
   padding: 10rpx 30rpx;
-  background: #f5f5f5;
+  background: #f7f8fa;
   border-radius: 30rpx;
 }
 
@@ -488,8 +638,8 @@ onMounted(() => {
   color: #333333;
 }
 
-/* 趋势图 */
-.trend-section {
+/* 图表区域 */
+.chart-section {
   background: #ffffff;
   margin: 0 30rpx 20rpx;
   border-radius: 20rpx;
@@ -500,7 +650,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30rpx;
+  margin-bottom: 20rpx;
 }
 
 .section-title {
@@ -511,7 +661,7 @@ onMounted(() => {
 
 .type-toggle {
   display: flex;
-  background: #f5f5f5;
+  background: #f7f8fa;
   border-radius: 20rpx;
   padding: 4rpx;
 }
@@ -534,86 +684,18 @@ onMounted(() => {
   color: #333333;
 }
 
-.trend-chart {
+.ring-chart-container,
+.line-chart-container,
+.pie-chart-container {
   width: 100%;
+  height: 400rpx;
 }
 
-.chart-container {
-  display: flex;
-  height: 300rpx;
-  padding-top: 20rpx;
-}
-
-.chart-bar {
-  flex: 0 0 60rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 10rpx;
-}
-
-.bar-wrapper {
-  flex: 1;
-  width: 100%;
-  display: flex;
-  flex-direction: column-reverse;
-  align-items: center;
-  gap: 4rpx;
-}
-
-.bar {
-  width: 100%;
-  min-height: 4rpx;
-  border-radius: 4rpx 4rpx 0 0;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 4rpx;
-}
-
-.income-bar {
-  background: #51cf66;
-}
-
-.expense-bar {
-  background: #ff6b6b;
-}
-
-.bar-amount {
-  font-size: 16rpx;
-  color: #ffffff;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-}
-
-.bar-label {
-  font-size: 20rpx;
-  color: #999999;
-  margin-top: 8rpx;
-}
-
-.chart-empty {
-  height: 300rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.empty-text {
-  font-size: 24rpx;
-  color: #cccccc;
-}
-
-/* 分类统计 */
-.category-section {
-  background: #ffffff;
-  margin: 0 30rpx;
-  border-radius: 20rpx;
-  padding: 30rpx;
-}
-
+/* 分类列表 */
 .category-list {
-  margin-top: 20rpx;
+  margin-top: 30rpx;
+  border-top: 1rpx solid #f5f5f5;
+  padding-top: 20rpx;
 }
 
 .category-item {
@@ -640,9 +722,9 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f0f0f0;
   border-radius: 50%;
   font-size: 28rpx;
+  color: #ffffff;
 }
 
 .category-name {
@@ -651,12 +733,9 @@ onMounted(() => {
 }
 
 .category-right {
-  flex: 1;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8rpx;
-  margin-left: 30rpx;
+  align-items: center;
+  gap: 20rpx;
 }
 
 .category-amount {
@@ -665,21 +744,8 @@ onMounted(() => {
   color: #333333;
 }
 
-.category-progress {
-  width: 200rpx;
-  height: 8rpx;
-  background: #f5f5f5;
-  border-radius: 4rpx;
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-  border-radius: 4rpx;
-}
-
 .category-percent {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #999999;
 }
 
@@ -687,7 +753,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80rpx 0;
+  padding: 60rpx 0;
 }
 
 .empty-icon {

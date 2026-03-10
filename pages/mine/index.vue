@@ -2,61 +2,68 @@
   <view class="mine-container">
     <!-- 登录引导区 - 未登录时显示 -->
     <view class="auth-guide" v-if="isGuest">
-      <view class="guide-icon">🔐</view>
-      <text class="guide-title">登录后同步数据</text>
-      <text class="guide-desc">登录可保护您的记账数据，多设备同步</text>
-      <view class="guide-btn" @tap="goLogin">
-        <text class="guide-btn-text">立即登录</text>
+      <view class="guide-card">
+        <view class="guide-icon-wrapper">
+          <text class="guide-icon">🔐</text>
+        </view>
+        <text class="guide-title">登录后同步数据</text>
+        <text class="guide-desc">登录可保护您的记账数据，多设备同步</text>
+        <view class="guide-btn" @tap="goLogin">
+          <text class="guide-btn-text">立即登录</text>
+        </view>
       </view>
     </view>
 
-    <!-- 功能列表 -->
+    <!-- 功能区域 -->
+    <view class="section-title">我的功能</view>
     <view class="function-section">
       <view class="function-list">
         <view class="function-item" @tap="goAccountManage">
-          <view class="item-left">
+          <view class="item-icon-wrapper" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
             <text class="item-icon">💳</text>
+          </view>
+          <view class="item-info">
             <text class="item-name">账户管理</text>
-          </view>
-          <view class="item-right">
-            <text class="item-value" v-if="!isGuest">{{ totalAssets }}</text>
-            <text class="item-arrow">›</text>
-          </view>
-        </view>
-
-        <view class="function-item" @tap="goCategoryManage">
-          <view class="item-left">
-            <text class="item-icon">📁</text>
-            <text class="item-name">分类管理</text>
+            <text class="item-desc" v-if="!isGuest">管理您的收支账户</text>
           </view>
           <text class="item-arrow">›</text>
         </view>
 
-        <view class="function-item" @tap="goStats">
-          <view class="item-left">
-            <text class="item-icon">📊</text>
-            <text class="item-name">统计分析</text>
+        <view class="function-item" @tap="goCategoryManage">
+          <view class="item-icon-wrapper" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <text class="item-icon">📁</text>
+          </view>
+          <view class="item-info">
+            <text class="item-name">分类管理</text>
+            <text class="item-desc">自定义收支分类</text>
           </view>
           <text class="item-arrow">›</text>
         </view>
       </view>
     </view>
 
-    <!-- 设置列表 -->
+    <!-- 更多设置 -->
+    <view class="section-title">更多</view>
     <view class="function-section">
       <view class="function-list">
         <view class="function-item" @tap="goSettings">
-          <view class="item-left">
+          <view class="item-icon-wrapper" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
             <text class="item-icon">⚙️</text>
+          </view>
+          <view class="item-info">
             <text class="item-name">设置</text>
+            <text class="item-desc">应用设置与数据管理</text>
           </view>
           <text class="item-arrow">›</text>
         </view>
 
         <view class="function-item" @tap="showAbout">
-          <view class="item-left">
+          <view class="item-icon-wrapper" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
             <text class="item-icon">ℹ️</text>
+          </view>
+          <view class="item-info">
             <text class="item-name">关于</text>
+            <text class="item-desc">版本信息</text>
           </view>
           <text class="item-arrow">›</text>
         </view>
@@ -65,13 +72,6 @@
 
     <!-- 底部状态信息 -->
     <view class="footer-status">
-      <view class="status-info">
-        <text class="status-text" v-if="isGuest">未登录</text>
-        <template v-else>
-          <text class="status-dot">●</text>
-          <text class="status-text">已登录</text>
-        </template>
-      </view>
       <view class="version-info">记账助手 v1.0.0</view>
     </view>
 
@@ -83,7 +83,9 @@
           <text class="about-close" @tap="showAboutPopup = false">✕</text>
         </view>
         <view class="about-body">
-          <text class="app-icon">💰</text>
+          <view class="app-icon-wrapper">
+            <text class="app-icon">💰</text>
+          </view>
           <text class="app-name">记账助手</text>
           <text class="app-version">版本 1.0.0</text>
           <view class="app-info">
@@ -104,45 +106,10 @@ import { useUserStore } from '../../store/user'
 const userStore = useUserStore()
 
 // 状态
-const totalAssets = ref('¥0.00')
 const showAboutPopup = ref(false)
 
 // 计算属性
 const isGuest = computed(() => userStore.isGuest)
-
-/**
- * 格式化金额
- */
-const formatMoney = (val: number) => {
-  return '¥' + val.toFixed(2)
-}
-
-/**
- * 加载用户总资产
- */
-const loadUserStats = async () => {
-  if (!userStore.openid) {
-    return
-  }
-
-  try {
-    // 获取总资产
-    // @ts-ignore
-    const statsRes = await uniCloud.callFunction({
-      name: 'statistics',
-      data: {
-        action: 'overview',
-        openid: userStore.openid
-      }
-    })
-    if (statsRes.result.code === 0) {
-      const assets = statsRes.result.data.totalAssets || 0
-      totalAssets.value = formatMoney(assets)
-    }
-  } catch (error) {
-    console.error('加载总资产失败：', error)
-  }
-}
 
 /**
  * 跳转登录
@@ -191,24 +158,6 @@ const goCategoryManage = () => {
 }
 
 /**
- * 跳转统计分析
- */
-const goStats = () => {
-  if (isGuest.value) {
-    // @ts-ignore
-    uni.showToast({
-      title: '请先登录',
-      icon: 'none'
-    })
-    return
-  }
-  // @ts-ignore
-  uni.navigateTo({
-    url: '/pages/stats/index'
-  })
-}
-
-/**
  * 跳转设置页面
  */
 const goSettings = () => {
@@ -229,70 +178,91 @@ const showAbout = () => {
  * 页面加载
  */
 onMounted(() => {
-  setTimeout(() => {
-    loadUserStats()
-  }, 500)
+  // 页面加载
 })
 
 // 页面显示时刷新
 onShow(() => {
-  loadUserStats()
+  // 页面显示
 })
 </script>
 
 <style scoped>
 .mine-container {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 30rpx 20rpx 60rpx
+  background: #f7f8fa;
+  padding: 20rpx;
 }
 
 /* 登录引导区 */
 .auth-guide {
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
-  margin: 30rpx;
+  padding: 30rpx 0;
+}
+
+.guide-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin: 0 10rpx;
   border-radius: 24rpx;
-  padding: 60rpx 40rpx;
+  padding: 50rpx 40rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20rpx;
+  gap: 16rpx;
   text-align: center;
+  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
+}
+
+.guide-icon-wrapper {
+  width: 120rpx;
+  height: 120rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .guide-icon {
-  font-size: 80rpx;
-  opacity: 0.8;
+  font-size: 60rpx;
 }
 
 .guide-title {
-  font-size: 32rpx;
-  font-weight: 500;
-  color: #333333;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #ffffff;
 }
 
 .guide-desc {
   font-size: 26rpx;
-  color: #888888;
+  color: rgba(255, 255, 255, 0.9);
   line-height: 1.6;
 }
 
 .guide-btn {
   margin-top: 10rpx;
-  padding: 20rpx 60rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 18rpx 50rpx;
+  background: #ffffff;
   border-radius: 40rpx;
 }
 
 .guide-btn-text {
   font-size: 28rpx;
-  color: #ffffff;
-  font-weight: 500;
+  color: #667eea;
+  font-weight: 600;
+}
+
+/* 分组标题 */
+.section-title {
+  padding: 30rpx 20rpx 16rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #999999;
 }
 
 /* 功能区域 */
 .function-section {
   background: #ffffff;
+  margin: 0 10rpx 20rpx;
   border-radius: 20rpx;
   overflow: hidden;
 }
@@ -303,9 +273,8 @@ onShow(() => {
 
 .function-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 30rpx 0;
+  padding: 28rpx 10rpx;
   border-bottom: 1rpx solid #f5f5f5;
 }
 
@@ -313,74 +282,56 @@ onShow(() => {
   border-bottom: none;
 }
 
-.item-left {
+.item-icon-wrapper {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 20rpx;
   display: flex;
   align-items: center;
-  gap: 20rpx;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .item-icon {
   font-size: 40rpx;
-  width: 70rpx;
-  height: 70rpx;
+}
+
+.item-info {
+  flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f5f5f5;
-  border-radius: 50%;
+  flex-direction: column;
+  gap: 4rpx;
+  margin-left: 20rpx;
 }
 
 .item-name {
   font-size: 30rpx;
+  font-weight: 500;
   color: #333333;
 }
 
-.item-right {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  margin-right: -5rpx;
-}
-
-.item-value {
-  font-size: 26rpx;
+.item-desc {
+  font-size: 24rpx;
   color: #999999;
 }
 
 .item-arrow {
-  font-size: 40rpx;
+  font-size: 36rpx;
   color: #cccccc;
-  flex-shrink: 0;
+  margin-right: 10rpx;
 }
 
 /* 底部状态信息 */
 .footer-status {
-  margin-top: 40rpx;
+  padding: 40rpx 0 60rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8rpx;
-}
-
-.status-info {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-}
-
-.status-dot {
-  font-size: 20rpx;
-  color: #52c41a;
-}
-
-.status-text {
-  font-size: 24rpx;
-  color: #999999;
 }
 
 .version-info {
   font-size: 24rpx;
-  color: #bbbbbb;
+  color: #cccccc;
 }
 
 /* 关于弹窗 */
@@ -398,9 +349,9 @@ onShow(() => {
 }
 
 .about-popup {
-  width: 500rpx;
+  width: 520rpx;
   background: #ffffff;
-  border-radius: 20rpx;
+  border-radius: 24rpx;
   overflow: hidden;
 }
 
@@ -414,7 +365,7 @@ onShow(() => {
 
 .about-title {
   font-size: 30rpx;
-  font-weight: bold;
+  font-weight: 600;
   color: #333333;
 }
 
@@ -424,20 +375,30 @@ onShow(() => {
 }
 
 .about-body {
-  padding: 60rpx 30rpx;
+  padding: 50rpx 30rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15rpx;
+  gap: 12rpx;
+}
+
+.app-icon-wrapper {
+  width: 120rpx;
+  height: 120rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .app-icon {
-  font-size: 100rpx;
+  font-size: 60rpx;
 }
 
 .app-name {
   font-size: 32rpx;
-  font-weight: bold;
+  font-weight: 600;
   color: #333333;
 }
 
@@ -450,7 +411,7 @@ onShow(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8rpx;
+  gap: 6rpx;
   margin-top: 20rpx;
 }
 

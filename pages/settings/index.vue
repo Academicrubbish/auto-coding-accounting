@@ -484,9 +484,8 @@ const handleLogout = () => {
     content: '确定要退出登录吗？退出后可以继续使用游客模式浏览',
     success: (res: any) => {
       if (res.confirm) {
-        // 清除登录状态
-        const { clearAuthCache } = require('../../utils/auth-cache')
-        clearAuthCache()
+        // 使用 userStore 的 logout 方法
+        userStore.logout()
 
         // @ts-ignore
         uni.showToast({
@@ -510,7 +509,7 @@ const handleLogout = () => {
 <style scoped>
 .settings-container {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: #f7f8fa;
   padding-bottom: 40rpx;
 }
 
@@ -558,7 +557,7 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
+  background: #f7f8fa;
   border-radius: 50%;
 }
 

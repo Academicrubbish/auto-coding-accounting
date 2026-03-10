@@ -159,10 +159,10 @@ const getCategoryIcon = (item: any) => {
 }
 
 /**
- * 获取分类名称
+ * 获取分类名称（优先显示备注，无备注则显示分类名称）
  */
 const getCategoryName = (item: any) => {
-  return item.categoryName || item.remark || '未分类'
+  return item.remark || item.categoryName || '未分类'
 }
 
 /**
@@ -315,6 +315,29 @@ watch(() => userStore.openid, (newOpenid) => {
   if (newOpenid) {
     console.log('检测到 openid 变化，重新加载数据')
     pagingRef.value?.reload()
+  } else {
+    // 退出登录，清空数据
+    console.log('检测到退出登录，清空数据')
+    transactions.value = []
+    totalAssets.value = 0
+    monthIncome.value = 0
+    monthExpense.value = 0
+    hasLoadedOnce.value = false
+    pagingRef.value?.complete([])
+  }
+})
+
+// 监听登录状态版本变化（用于处理退出登录）
+watch(() => userStore.authStateVersion, () => {
+  if (!userStore.openid) {
+    // 退出登录，清空数据
+    console.log('检测到退出登录，清空数据')
+    transactions.value = []
+    totalAssets.value = 0
+    monthIncome.value = 0
+    monthExpense.value = 0
+    hasLoadedOnce.value = false
+    pagingRef.value?.complete([])
   }
 })
 
@@ -331,8 +354,18 @@ onMounted(() => {
 // 页面显示时刷新数据
 onShow(() => {
   console.log('首页 onShow 触发')
-  // 只在页面已经加载过一次后才刷新（从其他页面返回时）
-  if (userStore.openid && hasLoadedOnce.value) {
+  // 如果未登录，清空数据
+  if (!userStore.openid) {
+    transactions.value = []
+    totalAssets.value = 0
+    monthIncome.value = 0
+    monthExpense.value = 0
+    hasLoadedOnce.value = false
+    pagingRef.value?.complete([])
+    return
+  }
+  // 已登录，刷新数据
+  if (hasLoadedOnce.value) {
     loadStatsData()
     pagingRef.value?.reload()
   }
@@ -342,7 +375,7 @@ onShow(() => {
 <style scoped>
 .home-container {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: #f7f8fa;
   padding-bottom: 100rpx;
 }
 
@@ -350,6 +383,7 @@ onShow(() => {
 .asset-card {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 60rpx 40rpx 40rpx;
+  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.25);
 }
 
 .asset-header {
@@ -361,13 +395,13 @@ onShow(() => {
 
 .asset-label {
   font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.85);
   margin-bottom: 10rpx;
 }
 
 .asset-value {
   font-size: 64rpx;
-  font-weight: bold;
+  font-weight: 700;
   color: #ffffff;
 }
 
@@ -384,13 +418,13 @@ onShow(() => {
 
 .detail-label {
   font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.75);
   margin-bottom: 8rpx;
 }
 
 .detail-value {
   font-size: 32rpx;
-  font-weight: 500;
+  font-weight: 600;
   color: #ffffff;
 }
 
@@ -411,6 +445,7 @@ onShow(() => {
   gap: 10rpx;
   border: none;
   font-size: 28rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 
 .expense-btn {
@@ -429,7 +464,7 @@ onShow(() => {
 
 .action-text {
   font-size: 28rpx;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* 近期交易标题 */
@@ -443,8 +478,8 @@ onShow(() => {
 }
 
 .section-title {
-  font-size: 32rpx;
-  font-weight: bold;
+  font-size: 30rpx;
+  font-weight: 600;
   color: #333333;
 }
 
@@ -485,7 +520,7 @@ onShow(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
+  background: #f7f8fa;
   border-radius: 50%;
 }
 
@@ -497,7 +532,12 @@ onShow(() => {
 
 .item-category {
   font-size: 30rpx;
+  font-weight: 500;
   color: #333333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 400rpx;
 }
 
 .item-date {
@@ -507,7 +547,7 @@ onShow(() => {
 
 .item-amount {
   font-size: 32rpx;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .item-amount.income {
@@ -534,6 +574,7 @@ onShow(() => {
 
 .empty-title {
   font-size: 32rpx;
+  font-weight: 600;
   color: #333333;
   margin-bottom: 15rpx;
 }
@@ -550,6 +591,8 @@ onShow(() => {
   color: #ffffff;
   border-radius: 50rpx;
   font-size: 28rpx;
+  font-weight: 600;
   border: none;
+  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
 }
 </style>

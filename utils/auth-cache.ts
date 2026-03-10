@@ -31,24 +31,24 @@ export function getAuthCache(): AuthCache | null {
 }
 
 /**
- * 保存认证缓存
+ * 保存认证缓存（永久有效，除非用户退出登录）
  * @param openid 用户 openid
  * @param userData 用户数据
- * @param expireDays 过期天数，默认 7 天
  */
-export function setAuthCache(openid: string, userData?: any, expireDays: number = DEFAULT_EXPIRE_DAYS): boolean {
+export function setAuthCache(openid: string, userData?: any): boolean {
   try {
-    const expireTime = Date.now() + expireDays * 24 * 60 * 60 * 1000
     const cache: AuthCache = {
       openid: openid,
       userData: userData,
-      expireTime: expireTime,
+      // 不设置过期时间，永久有效
+      expireTime: 0,
       createTime: Date.now()
     }
     // @ts-ignore
     uni.setStorageSync(CACHE_KEY, JSON.stringify(cache))
     return true
   } catch (e) {
+    console.error('[Auth Cache] 保存失败:', e)
     return false
   }
 }
@@ -67,7 +67,7 @@ export function clearAuthCache(): boolean {
 }
 
 /**
- * 检查缓存是否有效
+ * 检查缓存是否有效（永久有效，除非用户退出登录）
  */
 export function isAuthCacheValid(): boolean {
   const cache = getAuthCache()
@@ -75,14 +75,7 @@ export function isAuthCacheValid(): boolean {
     return false
   }
 
-  // 检查是否过期
-  const now = Date.now()
-  if (cache.expireTime && now > cache.expireTime) {
-    // 缓存已过期，清除缓存
-    clearAuthCache()
-    return false
-  }
-
+  // 不检查过期时间，只要存在就有效
   return true
 }
 

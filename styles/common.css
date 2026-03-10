@@ -1,0 +1,188 @@
+/**
+ * 记账助手 - 通用样式类
+ * 可在页面中使用 class="xxx" 直接应用
+ */
+
+/* ==================== 布局类 ==================== */
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-xs { gap: 8rpx; }
+.gap-sm { gap: 16rpx; }
+.gap-md { gap: 20rpx; }
+.gap-lg { gap: 30rpx; }
+
+/* ==================== 文字类 ==================== */
+
+.text-primary { color: #333333; }
+.text-secondary { color: #666666; }
+.text-tertiary { color: #999999; }
+.text-white { color: #ffffff; }
+.text-income { color: #51cf66; }
+.text-expense { color: #ff6b6b; }
+
+.text-xs { font-size: 22rpx; }
+.text-sm { font-size: 24rpx; }
+.text-md { font-size: 26rpx; }
+.text-lg { font-size: 28rpx; }
+.text-xl { font-size: 30rpx; }
+.text-2xl { font-size: 32rpx; }
+.text-3xl { font-size: 36rpx; }
+.text-4xl { font-size: 40rpx; }
+
+.font-bold { font-weight: 600; }
+.font-medium { font-weight: 500; }
+
+/* ==================== 间距类 ==================== */
+
+.p-xs { padding: 8rpx; }
+.p-sm { padding: 16rpx; }
+.p-md { padding: 20rpx; }
+.p-lg { padding: 30rpx; }
+.p-xl { padding: 40rpx; }
+
+.px-md { padding-left: 20rpx; padding-right: 20rpx; }
+.py-md { padding-top: 20rpx; padding-bottom: 20rpx; }
+
+.m-xs { margin: 8rpx; }
+.m-sm { margin: 16rpx; }
+.m-md { margin: 20rpx; }
+.m-lg { margin: 30rpx; }
+
+.mt-sm { margin-top: 16rpx; }
+.mt-md { margin-top: 20rpx; }
+.mb-sm { margin-bottom: 16rpx; }
+.mb-md { margin-bottom: 20rpx; }
+
+/* ==================== 背景类 ==================== */
+
+.bg-white { background-color: #ffffff; }
+.bg-page { background-color: #f7f8fa; }
+.bg-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.bg-income { background-color: #51cf66; }
+.bg-expense { background-color: #ff6b6b; }
+
+/* ==================== 圆角类 ==================== */
+
+.radius-sm { border-radius: 12rpx; }
+.radius-md { border-radius: 16rpx; }
+.radius-lg { border-radius: 20rpx; }
+.radius-xl { border-radius: 24rpx; }
+.radius-round { border-radius: 50%; }
+
+/* ==================== 阴影类 ==================== */
+
+.shadow-sm { box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.06); }
+.shadow-md { box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.15); }
+.shadow-primary { box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3); }
+
+/* ==================== 通用组件样式 ==================== */
+
+/* 卡片 */
+.card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+/* 按钮 */
+.btn {
+  padding: 20rpx 40rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  text-align: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
+}
+
+.btn-outline {
+  border: 2rpx solid #667eea;
+  color: #667eea;
+}
+
+/* 输入框 */
+.input {
+  background: #f5f5f5;
+  border-radius: 16rpx;
+  padding: 24rpx 30rpx;
+  font-size: 28rpx;
+  color: #333333;
+}
+
+/* 标签 */
+.tag {
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+}
+
+.tag-income {
+  background: rgba(81, 207, 102, 0.1);
+  color: #51cf66;
+}
+
+.tag-expense {
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+}
+
+/* 分隔线 */
+.divider {
+  height: 1rpx;
+  background: #f0f0f0;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 0;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+}
+
+.empty-text {
+  font-size: 26rpx;
+  color: #999999;
+}
+
+/* 加载中 */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+}
+
+/* 安全区域适配 */
+.safe-area-bottom {
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+}

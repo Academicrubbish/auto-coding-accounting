@@ -89,6 +89,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '../../store/user'
 
 const userStore = useUserStore()
@@ -128,7 +129,7 @@ const getCategoryIcon = (item: any) => {
 }
 
 /**
- * 获取分类名称
+ * 获取分类名称（优先显示备注，无备注则显示分类名称）
  */
 const getCategoryName = (item: any) => {
   return item.categoryName || '未分类'
@@ -261,6 +262,16 @@ onMounted(() => {
 
   if (options.id) {
     transactionId.value = options.id
+    loadTransaction()
+  }
+})
+
+/**
+ * 页面显示时刷新数据（从编辑页返回时会触发）
+ */
+onShow(() => {
+  // 如果已经有transactionId，说明是返回操作，需要刷新数据
+  if (transactionId.value) {
     loadTransaction()
   }
 })

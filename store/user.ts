@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { getOpenidFromCache, getUserDataFromCache, isAuthCacheValid, clearAuthCache } from '../utils/auth-cache'
+import { getOpenidFromCache, getUserDataFromCache, isAuthCacheValid, clearAuthCache, setAuthCache } from '../utils/auth-cache'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -36,6 +36,7 @@ export const useUserStore = defineStore('user', {
     /**
      * 从缓存恢复登录状态
      * 返回 true 表示恢复成功，false 表示恢复失败
+     * 注意：不再进行云函数验证，直接信任本地缓存
      */
     async RestoreFromCache(): Promise<boolean> {
       return new Promise((resolve) => {
@@ -58,63 +59,31 @@ export const useUserStore = defineStore('user', {
           this.setUserData(cachedUserData)
         }
 
-        // 验证 openid 仍然有效（尝试获取用户信息）
-        this.verifyUserInfo()
-          .then((isValid) => {
-            if (isValid) {
-              // 验证成功，设置为已登录状态
-              this.setIsGuest(false)
-              resolve(true)
-            } else {
-              // 验证失败，清除缓存
-              clearAuthCache()
-              this.setOpenid('')
-              this.setUserData({})
-              this.setIsGuest(true)
-              resolve(false)
-            }
-          })
-          .catch(() => {
-            // 验证出错，清除缓存
-            clearAuthCache()
-            this.setOpenid('')
-            this.setUserData({})
-            this.setIsGuest(true)
-            resolve(false)
-          })
+        // 直接设置为已登录状态，不再进行云函数验证
+        this.setIsGuest(false)
+        resolve(true)
       })
     },
 
     /**
+     * 退出登录
+     */
+    logout(): void {
+      // 清除本地缓存
+      clearAuthCache()
+      // 清除 store 状态
+      this.setOpenid('')
+      this.setUserData({})
+      this.setIsGuest(true)
+    },
+
+    /**
      * 验证用户信息（通过云函数查询）
+     * 注意：此函数已废弃，保留用于可能的后续扩展
      */
     async verifyUserInfo(): Promise<boolean> {
-      if (!this.openid) {
-        return false
-      }
-
-      try {
-        // @ts-ignore
-        const res = await uniCloud.callFunction({
-          name: 'login',
-          data: {
-            action: 'verify',
-            openid: this.openid
-          }
-        })
-
-        if (res.result && res.result.code === 0) {
-          // 更新用户数据
-          if (res.result.data.userData) {
-            this.setUserData(res.result.data.userData)
-          }
-          return true
-        }
-        return false
-      } catch (error) {
-        console.error('验证用户信息失败', error)
-        return false
-      }
+      // 不再需要验证，直接返回 true
+      return true
     }
   }
 })

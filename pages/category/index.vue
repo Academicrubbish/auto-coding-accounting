@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '../../store/user'
 
@@ -147,9 +147,36 @@ onMounted(() => {
 
 // 页面显示时刷新
 onShow(() => {
-  // 只在页面已经加载过一次后才刷新（从其他页面返回时）
+  // 如果未登录，清空数据
+  if (!userStore.openid) {
+    categories.value = []
+    hasLoadedOnce.value = false
+    return
+  }
+  // 已登录，刷新数据
   if (hasLoadedOnce.value) {
     loadCategories()
+  }
+})
+
+// 监听登录状态变化
+watch(() => userStore.openid, (newOpenid) => {
+  if (newOpenid) {
+    console.log('分类管理：检测到登录，加载数据')
+    loadCategories()
+  } else {
+    console.log('分类管理：检测到退出登录，清空数据')
+    categories.value = []
+    hasLoadedOnce.value = false
+  }
+})
+
+// 监听登录状态版本变化
+watch(() => userStore.authStateVersion, () => {
+  if (!userStore.openid) {
+    console.log('分类管理：检测到退出登录，清空数据')
+    categories.value = []
+    hasLoadedOnce.value = false
   }
 })
 </script>
@@ -157,7 +184,7 @@ onShow(() => {
 <style scoped>
 .category-container {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: #f7f8fa;
   padding-bottom: 120rpx;
 }
 
@@ -177,7 +204,7 @@ onShow(() => {
   align-items: center;
   justify-content: center;
   border-radius: 35rpx;
-  background: #f5f5f5;
+  background: #f7f8fa;
   transition: all 0.3s;
 }
 

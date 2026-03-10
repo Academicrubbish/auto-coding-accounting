@@ -96,7 +96,7 @@ const handleLogin = async () => {
       userStore.setUserData(userData)
       userStore.setIsGuest(false)
 
-      // 保存到本地缓存
+      // 保存到本地缓存（永久有效）
       setAuthCache(openid, userData)
 
       // @ts-ignore

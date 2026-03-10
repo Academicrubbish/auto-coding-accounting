@@ -241,7 +241,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '../../store/user'
 
@@ -397,10 +397,10 @@ const getCategoryIcon = (item: any) => {
 }
 
 /**
- * 获取分类名称
+ * 获取分类名称（优先显示备注，无备注则显示分类名称）
  */
 const getCategoryName = (item: any) => {
-  return item.categoryName || item.remark || '未分类'
+  return item.remark || item.categoryName || '未分类'
 }
 
 /**
@@ -602,6 +602,29 @@ const loadFilterOptions = async () => {
   hasLoadedOnce.value = true
 }
 
+// 监听登录状态变化
+watch(() => userStore.openid, (newOpenid) => {
+  if (newOpenid) {
+    console.log('交易列表：检测到登录，加载数据')
+    pagingRef.value?.reload()
+  } else {
+    console.log('交易列表：检测到退出登录，清空数据')
+    transactions.value = []
+    hasLoadedOnce.value = false
+    pagingRef.value?.complete([])
+  }
+})
+
+// 监听登录状态版本变化
+watch(() => userStore.authStateVersion, () => {
+  if (!userStore.openid) {
+    console.log('交易列表：检测到退出登录，清空数据')
+    transactions.value = []
+    hasLoadedOnce.value = false
+    pagingRef.value?.complete([])
+  }
+})
+
 /**
  * 页面加载
  */
@@ -612,9 +635,15 @@ onMounted(() => {
 // 页面显示时刷新数据
 onShow(() => {
   console.log('交易列表 onShow 触发')
-  // 只在页面已经加载过一次后才刷新（从其他页面返回时）
+  // 如果未登录，清空数据
+  if (!userStore.openid) {
+    transactions.value = []
+    hasLoadedOnce.value = false
+    pagingRef.value?.complete([])
+    return
+  }
+  // 已登录，刷新数据
   if (hasLoadedOnce.value) {
-    // 刷新列表
     pagingRef.value?.reload()
   } else {
     hasLoadedOnce.value = true
@@ -625,7 +654,7 @@ onShow(() => {
 <style scoped>
 .list-container {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: #f7f8fa;
 }
 
 /* 筛选栏 */
@@ -644,7 +673,7 @@ onShow(() => {
   gap: 10rpx;
   padding: 10rpx 20rpx;
   border-radius: 30rpx;
-  background: #f5f5f5;
+  background: #f7f8fa;
 }
 
 .filter-icon {
@@ -690,7 +719,7 @@ onShow(() => {
   justify-content: space-between;
   align-items: center;
   padding: 20rpx 30rpx;
-  background: #f5f5f5;
+  background: #f7f8fa;
 }
 
 .date-text {
@@ -726,7 +755,7 @@ onShow(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
+  background: #f7f8fa;
   border-radius: 50%;
 }
 
@@ -739,6 +768,10 @@ onShow(() => {
 .item-category {
   font-size: 30rpx;
   color: #333333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 400rpx;
 }
 
 .item-meta {
@@ -796,68 +829,78 @@ onShow(() => {
 
 .filter-popup {
   width: 100%;
-  max-height: 80vh;
+  max-height: 75vh;
   background: #ffffff;
-  border-radius: 30rpx 30rpx 0 0;
-  overflow-y: auto;
+  border-radius: 24rpx 24rpx 0 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .popup-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 30rpx;
+  padding: 32rpx 32rpx 24rpx;
   border-bottom: 1rpx solid #f0f0f0;
-  position: sticky;
-  top: 0;
-  background: #ffffff;
+  flex-shrink: 0;
 }
 
 .popup-title {
   font-size: 32rpx;
-  font-weight: bold;
-  color: #333333;
+  font-weight: 600;
+  color: #1a1a1a;
 }
 
 .popup-close {
-  font-size: 40rpx;
-  color: #999999;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7f8fa;
+  border-radius: 50%;
+  font-size: 28rpx;
+  color: #666666;
 }
 
 .filter-section {
-  padding: 30rpx;
+  padding: 24rpx 32rpx;
   border-bottom: 1rpx solid #f5f5f5;
 }
 
 .section-label {
-  font-size: 28rpx;
-  color: #666666;
+  font-size: 26rpx;
+  color: #999999;
   margin-bottom: 20rpx;
   display: block;
 }
 
 .type-options {
   display: flex;
-  gap: 20rpx;
+  gap: 16rpx;
 }
 
 .type-option {
   flex: 1;
-  height: 60rpx;
+  height: 68rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 30rpx;
-  background: #f5f5f5;
+  border-radius: 16rpx;
+  background: #f7f8fa;
+  transition: all 0.2s;
 }
 
 .type-option.active {
-  background: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
 }
 
 .option-text {
-  font-size: 26rpx;
-  color: #999999;
+  font-size: 28rpx;
+  color: #666666;
+  font-weight: 500;
 }
 
 .type-option.active .option-text {
@@ -867,27 +910,28 @@ onShow(() => {
 .date-range {
   display: flex;
   align-items: center;
-  gap: 15rpx;
+  gap: 16rpx;
 }
 
 .date-input {
   flex: 1;
-  height: 60rpx;
+  height: 72rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10rpx;
-  background: #f5f5f5;
+  border-radius: 16rpx;
+  background: #f8f8f8;
+  border: 1rpx solid #eeeeee;
 }
 
 .date-text {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #333333;
 }
 
 .date-separator {
   font-size: 24rpx;
-  color: #999999;
+  color: #cccccc;
 }
 
 .category-select,
@@ -895,91 +939,149 @@ onShow(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 60rpx;
-  padding: 0 20rpx;
-  border-radius: 10rpx;
-  background: #f5f5f5;
+  height: 72rpx;
+  padding: 0 24rpx;
+  border-radius: 16rpx;
+  background: #f8f8f8;
+  border: 1rpx solid #eeeeee;
 }
 
 .select-text {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #333333;
 }
 
 .select-arrow {
-  font-size: 40rpx;
+  font-size: 32rpx;
   color: #cccccc;
 }
 
 .filter-actions {
   display: flex;
-  gap: 20rpx;
-  padding: 30rpx;
-  position: sticky;
-  bottom: 0;
+  gap: 16rpx;
+  padding: 24rpx 32rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
   background: #ffffff;
+  border-top: 1rpx solid #f0f0f0;
+  flex-shrink: 0;
 }
 
 .action-btn {
   flex: 1;
-  height: 70rpx;
-  border-radius: 35rpx;
+  height: 80rpx;
+  border-radius: 20rpx;
   font-size: 28rpx;
+  font-weight: 500;
   border: none;
 }
 
 .reset-btn {
-  background: #f5f5f5;
+  background: #f7f8fa;
   color: #666666;
 }
 
 .confirm-btn {
-  background: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #ffffff;
+  box-shadow: 0 4rpx 16rpx rgba(102, 126, 234, 0.3);
 }
 
 /* 选择器弹窗 */
+.picker-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1010;
+  display: flex;
+  align-items: flex-end;
+}
+
 .picker-content {
   width: 100%;
-  max-height: 50vh;
+  max-height: 60vh;
   background: #ffffff;
-  border-radius: 30rpx 30rpx 0 0;
+  border-radius: 24rpx 24rpx 0 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32rpx 32rpx 24rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  flex-shrink: 0;
 }
 
 .picker-title {
   font-size: 30rpx;
-  font-weight: bold;
-  color: #333333;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.picker-close {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7f8fa;
+  border-radius: 50%;
+  font-size: 28rpx;
+  color: #666666;
 }
 
 .category-list,
 .account-list {
-  height: 40vh;
+  max-height: 50vh;
 }
 
 .category-item,
 .account-item {
   display: flex;
   align-items: center;
-  padding: 30rpx;
+  padding: 28rpx 32rpx;
   border-bottom: 1rpx solid #f5f5f5;
+  transition: background 0.2s;
 }
 
 .category-item.selected,
 .account-item.selected {
-  background: #f0f7ff;
+  background: linear-gradient(90deg, #f0f7ff 0%, #e8f2ff 100%);
+}
+
+.category-item.selected .category-name,
+.account-item.selected .account-name {
+  color: #667eea;
+  font-weight: 500;
 }
 
 .category-icon,
 .account-icon {
-  font-size: 36rpx;
-  margin-right: 15rpx;
+  font-size: 40rpx;
+  margin-right: 16rpx;
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7f8fa;
+  border-radius: 50%;
+}
+
+.category-item.selected .category-icon,
+.account-item.selected .account-icon {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .category-name,
 .account-name {
-  font-size: 28rpx;
+  font-size: 30rpx;
   color: #333333;
 }
 
