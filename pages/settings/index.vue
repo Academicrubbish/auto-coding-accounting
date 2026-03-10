@@ -280,18 +280,61 @@ const importData = () => {
 
   if (isImporting.value) return
 
-  // 选择文件
+  // 使用 fallback 模式，兼容不同环境
   // @ts-ignore
-  wx.chooseMessageFile({
+  const chooseMessageFile = wx.chooseMessageFile || uni.chooseMessageFile
+
+  if (typeof chooseMessageFile !== 'function') {
+    // @ts-ignore
+    uni.showToast({
+      title: '当前环境不支持文件选择',
+      icon: 'none'
+    })
+    return
+  }
+
+  // 选择文件
+  chooseMessageFile({
     count: 1,
     type: 'file',
-    extension: ['csv'],
     success: (res: any) => {
-      const file = res.tempFiles[0]
-      parseAndImportCSV(file.path)
+      if (res.tempFiles && res.tempFiles.length > 0) {
+        const file = res.tempFiles[0]
+        const fileName = file.name || ''
+
+        // 验证文件扩展名
+        if (fileName.endsWith('.csv')) {
+          // 使用 fallback 获取文件路径
+          const filePath = file.path || file.tempFilePath || file.filePath
+          if (filePath) {
+            parseAndImportCSV(filePath)
+          } else {
+            // @ts-ignore
+            uni.showToast({
+              title: '文件路径获取失败',
+              icon: 'none'
+            })
+          }
+        } else {
+          // @ts-ignore
+          uni.showToast({
+            title: '请选择CSV文件',
+            icon: 'none'
+          })
+        }
+      }
     },
     fail: (err: any) => {
+      // 用户取消选择文件，不显示错误提示
+      if (err.errMsg && err.errMsg.includes('cancel')) {
+        return
+      }
       console.error('选择文件失败：', err)
+      // @ts-ignore
+      uni.showToast({
+        title: '选择文件失败',
+        icon: 'none'
+      })
     }
   })
 }
