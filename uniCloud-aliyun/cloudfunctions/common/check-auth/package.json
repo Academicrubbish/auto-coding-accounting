@@ -1,7 +1,0 @@
-{
-  "name": "check-auth",
-  "version": "1.0.0",
-  "description": "权限验证公共模块",
-  "main": "index.js",
-  "dependencies": {}
-}
