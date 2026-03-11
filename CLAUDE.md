@@ -5,7 +5,7 @@
 - **Framework**: uni-app (Vue 3 + TypeScript)
 - **Cloud**: uniCloud (阿里云 Aliyun)
 - **Platform**: WeChat Mini Program (微信小程序)
-- **AppID**: wx07932ea2cbbef4c2
+- **AppID**: xxxx
 
 ## Tech Stack
 

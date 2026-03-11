@@ -25,8 +25,8 @@ exports.main = async (event, context) => {
 
   try {
     // 1. 调用微信 API 换取 openid
-    const appid = 'wx07932ea2cbbef4c2';
-    const secret = '9de5b734431f096da9ebcbc7f1e70bbb';
+    const appid = 'wx49fd391682f5ccc1';
+    const secret = '733dd70d85dd5cbd36c905e022d54d84';
     const apiUrl = `https://api.weixin.qq.com/sns/jscode2session?appid=${appid}&secret=${secret}&js_code=${code}&grant_type=authorization_code`;
 
     const res = await uniCloud.httpclient.request(apiUrl, {
