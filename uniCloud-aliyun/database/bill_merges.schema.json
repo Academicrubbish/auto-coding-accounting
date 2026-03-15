@@ -1,0 +1,138 @@
+{
+  "bsonType": "object",
+  "required": ["user_id", "transaction_time", "type", "amount"],
+  "permission": {
+    "read": "doc.user_id == auth.openid",
+    "create": "doc.user_id == auth.openid",
+    "update": "doc.user_id == auth.openid",
+    "delete": "doc.user_id == auth.openid"
+  },
+  "properties": {
+    "_id": {
+      "description": "主键"
+    },
+    "user_id": {
+      "bsonType": "string",
+      "description": "用户 openid",
+      "title": "用户ID",
+      "foreignKey": "users.openid"
+    },
+    "transaction_time": {
+      "bsonType": "string",
+      "description": "交易时间（中文格式：YYYY年MM月DD日）",
+      "title": "交易时间"
+    },
+    "transaction_type": {
+      "bsonType": "string",
+      "description": "交易类型（如：餐饮、交通等）",
+      "title": "交易类型"
+    },
+    "counterparty": {
+      "bsonType": "string",
+      "description": "交易对方",
+      "title": "交易对方"
+    },
+    "description": {
+      "bsonType": "string",
+      "description": "商品说明",
+      "title": "商品说明"
+    },
+    "type": {
+      "bsonType": "string",
+      "description": "收支类型",
+      "title": "类型",
+      "enum": ["expense", "income"]
+    },
+    "amount": {
+      "bsonType": "double",
+      "description": "金额（正数）",
+      "title": "金额",
+      "minimum": 0
+    },
+    "payment_method": {
+      "bsonType": "string",
+      "description": "支付方式",
+      "title": "支付方式"
+    },
+    "transaction_status": {
+      "bsonType": "string",
+      "description": "交易状态",
+      "title": "交易状态"
+    },
+    "transaction_no": {
+      "bsonType": "string",
+      "description": "交易单号",
+      "title": "交易单号"
+    },
+    "source": {
+      "bsonType": "string",
+      "description": "数据来源（微信/支付宝/银行名）",
+      "title": "来源"
+    },
+    "category_id": {
+      "bsonType": "string",
+      "description": "关联分类ID",
+      "title": "分类ID"
+    },
+    "account_id": {
+      "bsonType": "string",
+      "description": "关联账户ID",
+      "title": "账户ID",
+      "foreignKey": "accounts._id"
+    },
+    "remark": {
+      "bsonType": "string",
+      "description": "备注",
+      "title": "备注",
+      "maxLength": 500
+    },
+    "is_imported": {
+      "bsonType": "bool",
+      "description": "是否已导入到正式表",
+      "title": "已导入",
+      "defaultValue": false
+    },
+    "created_at": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "title": "创建时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    },
+    "updated_at": {
+      "bsonType": "timestamp",
+      "description": "更新时间",
+      "title": "更新时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    }
+  },
+  "indexes": [
+    {
+      "IndexName": "user_id_idx",
+      "MgoKeySchema": {
+        "MgoIndexKeys": [
+          {
+            "Name": "user_id",
+            "Direction": 1
+          }
+        ],
+        "MgoIsUnique": false
+      }
+    },
+    {
+      "IndexName": "is_imported_idx",
+      "MgoKeySchema": {
+        "MgoIndexKeys": [
+          {
+            "Name": "is_imported",
+            "Direction": 1
+          }
+        ],
+        "MgoIsUnique": false
+      }
+    }
+  ]
+}

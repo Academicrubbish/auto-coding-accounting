@@ -1096,3 +1096,248 @@ query_selector({ selector: "button" })
 **Known Remaining Issues**:
 - Account creation fails (needs further investigation)
 - Regression testing blocked by missing account data
+
+---
+
+### 2026-03-15: Statistics Empty State Fix & Bill Merge Import Feature
+
+**Task**:
+1. Fix statistics page showing pending state when user has no data
+2. Implement "流水合并导入" (Bill Merge Import) feature from combine-bills.js script
+
+---
+
+## Statistics Page Empty State Fix
+
+**Problem**: When user has no transaction data, chart components (qiun-data-charts) show a loading/pending state, confusing users into thinking the page is stuck.
+
+**Solution**: Add empty state placeholders for all three chart sections
+
+**Files Modified**: `pages/stats/index.vue`
+
+**Changes**:
+- **Ring Chart (收支比例)**: Show empty state when `monthIncome === 0 && monthExpense === 0`
+- **Line Chart (每日趋势)**: Show empty state when `dailyData.length === 0`
+- **Pie Chart (分类统计)**: Show empty state when `categoryData.length === 0`
+
+**Empty State Pattern**:
+```vue
+<view class="chart-empty" v-else>
+  <text class="empty-icon">📊</text>
+  <text class="empty-text">暂无收支数据</text>
+  <text class="empty-hint">记一笔后查看统计</text>
+</view>
+```
+
+---
+
+## Bill Merge Import Feature (流水合并导入)
+
+**Overview**: Integrate the logic from `combine-bills.js` script (https://github.com/Academicrubbish/multi-bill-tool) into the mini app, allowing users to merge WeChat, Alipay, and bank card transaction records.
+
+### New Pages
+
+| Page | Path | Purpose |
+|------|------|---------|
+| **Bill Merge Import** | `/pages/bill-merge/index` | Upload files → Parse → Save to temp table |
+| **Edit Merged Data** | `/pages/bill-merge/edit` | Review/Edit → Import to transactions table |
+
+### New Cloud Function
+
+**`bill-merge`** - Handles file parsing and merging logic
+
+**Actions**:
+- `parse` - Parse uploaded files (WeChat Excel, Alipay CSV, Bank Excel)
+- `save` - Save merged records to temporary table
+- `list` - Get paginated list from temp table
+- `update` - Update single record in temp table
+- `delete` - Delete single record from temp table
+- `clear` - Clear all records from temp table
+- `import` - Import validated records to transactions table
+
+**Dependencies**: `xlsx` (Excel parsing), `iconv-lite` (CSV encoding)
+
+### New Database Table
+
+**`bill_merges`** - Temporary storage for merged records
+
+**Key Fields**:
+- `transaction_time` - Chinese format (YYYY年MM月DD日)
+- `transaction_type` - Transaction type from source
+- `counterparty` - Transaction counterparty
+- `description` - Product/service description
+- `type` - expense/income
+- `amount` - Positive number
+- `payment_method` - Payment method
+- `source` - Data source (微信/支付宝/Bank Name)
+- `category_id` - User-selected category (for import)
+- `account_id` - User-selected account (for import)
+- `remark` - Combined notes
+- `is_imported` - Track whether imported to transactions table
+
+### Business Flow
+
+```
+Settings Page
+    │
+    ▼ (click "流水合并导入")
+┌─────────────────────────────────┐
+│  Bill Merge Import Page         │
+│  ┌─────────────────────────────┐│
+│  │ 1. Upload WeChat Bill (.xlsx)││
+│  │ 2. Upload Alipay Bill (.csv) ││
+│  │ 3. Add Bank Cards (0-3)     ││
+│  │    - Bank Name              ││
+│  │    - Card Last 4 Digits      ││
+│  │    - Upload Excel (.xlsx)    ││
+│  └─────────────────────────────┘│
+│                                  │
+│  [Execute Merge] → Parse Files  │
+│                                  │
+│  ┌─────────────────────────────┐│
+│  │ Merged Results List          ││
+│  │ - Date, Amount, Source       ││
+│  │ - Click to edit              ││
+│  └─────────────────────────────┘│
+│                                  │
+│  [View/Edit] → [Clear]          │
+└─────────────────────────────────┘
+            │
+            ▼
+┌─────────────────────────────────┐
+│  Edit Merged Data Page          │
+│  ┌─────────────────────────────┐│
+│  │ Top Buttons:                 ││
+│  │ [Clear] [Import (N)]         ││
+│  └─────────────────────────────┘│
+│                                  │
+│  ┌─────────────────────────────┐│
+│  │ Records List (z-paging)     ││
+│  │ - Date, Amount, Source       ││
+│  │ - Category, Account          ││
+│  │ - Click → Edit Modal        ││
+│  └─────────────────────────────┘│
+│                                  │
+│  Edit Modal:                     │
+│  - Type (Expense/Income)         │
+│  - Amount                        │
+│  - Date                          │
+│  - Category (picker)             │
+│  - Account (picker)              │
+│  - Remark                        │
+│  - [Save] [Delete]               │
+└─────────────────────────────────┘
+            │
+            ▼ (click [Import])
+        Transactions Table
+```
+
+### Data Mapping
+
+**Source Data → bill_merges Table**:
+- WeChat/Alipay/Bank fields → Unified schema
+- Date normalized to "YYYY年MM月DD日"
+- Amount as positive number
+- Source tracked in `source` field
+
+**bill_merges → transactions**:
+- `transaction_time`: "YYYY年MM月DD日" → "YYYY-MM-DD"
+- `type`: expense/income (mapped from 收/支)
+- `amount`: Direct copy
+- `category_id`: User selection or default to "其他"
+- `account_id`: User selection or default account
+- `remark`: Combined from source + counterparty + description
+
+### Smart Matching Logic
+
+**Bank Card Deduplication**:
+1. Identify WeChat/Alipay records paid with specific bank card
+2. Match against bank statement by: date + amount + income/expense type
+3. Only export unmatched bank records to avoid duplication
+
+**Example**:
+```
+WeChat record: 2025年01月15日, -100元, 建设银行储蓄卡(9351)
+Bank statement: 2025年01月15日, -100元, 消费
+→ Matched: Bank record NOT exported (duplicate)
+```
+
+### Settings Page Entry
+
+**Location**: `pages/settings/index.vue`
+
+**New Item**:
+```vue
+<view class="settings-item" @tap="goToBillMerge">
+  <view class="item-left">
+    <text class="item-icon">🔄</text>
+    <view class="item-info">
+      <text class="item-name">流水合并导入</text>
+      <text class="item-desc">合并微信、支付宝、银行卡流水</text>
+    </view>
+  </view>
+  <text class="item-arrow">›</text>
+</view>
+```
+
+### Files Created/Modified
+
+**Created**:
+- `uniCloud-aliyun/database/bill_merges.schema.json` - Temp table schema
+- `uniCloud-aliyun/cloudfunctions/bill-merge/index.js` - Cloud function
+- `uniCloud-aliyun/cloudfunctions/bill-merge/package.json` - Dependencies
+- `pages/bill-merge/index.vue` - Import page
+- `pages/bill-merge/edit.vue` - Edit page
+
+**Modified**:
+- `pages/settings/index.vue` - Added entry button
+- `pages.json` - Added routes for new pages
+- `pages/stats/index.vue` - Empty state fixes
+
+### Deployment Steps
+
+1. **Upload Cloud Function**:
+   - Right-click `uniCloud-aliyun/cloudfunctions/bill-merge`
+   - Select "上传部署"
+
+2. **Create Database Table**:
+   - Open uniCloud Web Console
+   - Navigate to 云数据库
+   - Upload `bill_merges.schema.json`
+
+3. **Test Flow**:
+   ```
+   设置 → 流水合并导入
+   ├─ Upload WeChat bill (test with small sample)
+   ├─ Upload Alipay bill (test with small sample)
+   ├─ Add 1 bank card (optional)
+   └─ Execute merge → Check results → Edit → Import
+   ```
+
+### Important Notes
+
+1. **File Format Requirements**:
+   - WeChat: `.xlsx` with standard headers
+   - Alipay: `.csv` (GBK or UTF-8)
+   - Bank cards: `.xlsx` with headers: `交易日期`, `交易金额` (required), `交易摘要`, `交易对方` (optional)
+
+2. **Default Behavior**:
+   - All records default to user's default account
+   - Category defaults to "其他" if not selected
+   - User can edit before importing
+
+3. **Data Safety**:
+   - Records stored in temp table until explicitly imported
+   - `is_imported` flag prevents re-import
+   - Clear option available to discard all temp data
+
+4. **User Experience**:
+   - Review and edit before final import
+   - No automatic import to prevent mistakes
+   - Clear feedback on merge results (total counts by source)
+
+### Reference
+
+Original script: https://github.com/Academicrubbish/multi-bill-tool/blob/master/combine-bills.js
+
+---

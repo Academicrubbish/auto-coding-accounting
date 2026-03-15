@@ -25,6 +25,17 @@
           </view>
           <text class="item-arrow">›</text>
         </view>
+
+        <view class="settings-item" @tap="goToBillMerge">
+          <view class="item-left">
+            <text class="item-icon">🔄</text>
+            <view class="item-info">
+              <text class="item-name">流水合并导入</text>
+              <text class="item-desc">合并微信、支付宝、银行卡流水</text>
+            </view>
+          </view>
+          <text class="item-arrow">›</text>
+        </view>
       </view>
     </view>
 
@@ -607,6 +618,24 @@ const parseAndImportCSV = (filePath: string) => {
       })
       isImporting.value = false
     }
+  })
+}
+
+/**
+ * 跳转到流水合并导入
+ */
+const goToBillMerge = () => {
+  if (isGuest.value) {
+    // @ts-ignore
+    uni.showToast({
+      title: '请先登录',
+      icon: 'none'
+    })
+    return
+  }
+  // @ts-ignore
+  uni.navigateTo({
+    url: '/pages/bill-merge/index'
   })
 }
 

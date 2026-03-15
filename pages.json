@@ -92,6 +92,22 @@
 				"navigationBarBackgroundColor": "#ffffff",
 				"navigationBarTextStyle": "black"
 			}
+		},
+		{
+			"path": "pages/bill-merge/index",
+			"style": {
+				"navigationBarTitleText": "流水合并导入",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/bill-merge/edit",
+			"style": {
+				"navigationBarTitleText": "编辑合并数据",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
 		}
 	],
 	"globalStyle": {
