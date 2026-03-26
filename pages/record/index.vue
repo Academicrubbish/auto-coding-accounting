@@ -776,7 +776,3 @@ onMounted(async () => {
   text-align: right;
 }
 </style>
-
-/**
- * 加载交易数据用于编辑
- */

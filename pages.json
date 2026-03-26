@@ -95,7 +95,6 @@
 		}
 	],
 	"globalStyle": {
-		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "记账助手",
 		"navigationBarBackgroundColor": "#667eea",
 		"navigationBarTextStyle": "white",
