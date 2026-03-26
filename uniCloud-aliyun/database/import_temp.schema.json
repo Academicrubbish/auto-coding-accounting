@@ -1,0 +1,141 @@
+{
+  "bsonType": "object",
+  "required": ["user_id", "transaction_date", "type", "amount"],
+  "permission": {
+    "read": "doc.user_id == auth.openid",
+    "create": "doc.user_id == auth.openid",
+    "update": "doc.user_id == auth.openid",
+    "delete": "doc.user_id == auth.openid"
+  },
+  "properties": {
+    "_id": {
+      "description": "主键"
+    },
+    "user_id": {
+      "bsonType": "string",
+      "description": "用户 openid",
+      "title": "用户ID",
+      "foreignKey": "users.openid"
+    },
+    "source": {
+      "bsonType": "string",
+      "description": "来源软件（钱迹、鲨鱼记账、通用CSV等）",
+      "title": "来源"
+    },
+    "raw_data": {
+      "bsonType": "object",
+      "description": "原始数据（JSON格式，保留用于调试）",
+      "title": "原始数据"
+    },
+    "transaction_date": {
+      "bsonType": "string",
+      "description": "交易日期（YYYY-MM-DD）",
+      "title": "交易日期"
+    },
+    "type": {
+      "bsonType": "string",
+      "description": "收支类型",
+      "title": "类型",
+      "enum": ["expense", "income"]
+    },
+    "amount": {
+      "bsonType": "double",
+      "description": "金额（正数）",
+      "title": "金额",
+      "minimum": 0
+    },
+    "category_name": {
+      "bsonType": "string",
+      "description": "源分类名（原始导入的分类名）",
+      "title": "源分类名"
+    },
+    "account_name": {
+      "bsonType": "string",
+      "description": "源账户名（原始导入的账户名）",
+      "title": "源账户名"
+    },
+    "remark": {
+      "bsonType": "string",
+      "description": "备注",
+      "title": "备注",
+      "maxLength": 500
+    },
+    "category_id": {
+      "bsonType": "string",
+      "description": "映射后分类ID（用户选择）",
+      "title": "分类ID",
+      "foreignKey": "categories._id"
+    },
+    "account_id": {
+      "bsonType": "string",
+      "description": "映射后账户ID（用户选择）",
+      "title": "账户ID",
+      "foreignKey": "accounts._id"
+    },
+    "is_imported": {
+      "bsonType": "bool",
+      "description": "是否已导入到正式表",
+      "title": "已导入",
+      "defaultValue": false
+    },
+    "import_batch": {
+      "bsonType": "string",
+      "description": "导入批次ID（同一次导入的记录共享）",
+      "title": "批次ID"
+    },
+    "created_at": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "title": "创建时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    },
+    "updated_at": {
+      "bsonType": "timestamp",
+      "description": "更新时间",
+      "title": "更新时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    }
+  },
+  "indexes": [
+    {
+      "IndexName": "user_id_idx",
+      "MgoKeySchema": {
+        "MgoIndexKeys": [
+          {
+            "Name": "user_id",
+            "Direction": 1
+          }
+        ],
+        "MgoIsUnique": false
+      }
+    },
+    {
+      "IndexName": "is_imported_idx",
+      "MgoKeySchema": {
+        "MgoIndexKeys": [
+          {
+            "Name": "is_imported",
+            "Direction": 1
+          }
+        ],
+        "MgoIsUnique": false
+      }
+    },
+    {
+      "IndexName": "batch_idx",
+      "MgoKeySchema": {
+        "MgoIndexKeys": [
+          {
+            "Name": "import_batch",
+            "Direction": 1
+          }
+        ],
+        "MgoIsUnique": false
+      }
+    }
+  ]
+}

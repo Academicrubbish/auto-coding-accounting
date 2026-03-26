@@ -94,6 +94,22 @@
 			}
 		},
 		{
+			"path": "pages/import/preview",
+			"style": {
+				"navigationBarTitleText": "导入数据",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/import/edit",
+			"style": {
+				"navigationBarTitleText": "编辑导入数据",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
 			"path": "pages/bill-merge/index",
 			"style": {
 				"navigationBarTitleText": "流水合并导入",
