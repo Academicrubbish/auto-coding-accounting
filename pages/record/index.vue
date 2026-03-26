@@ -59,18 +59,13 @@
       </view>
 
       <!-- 日期选择 -->
-      <view class="form-item date-item">
+      <view class="form-item">
         <view class="form-label">
           <text class="label-icon">📅</text>
           <text class="label-text">日期</text>
         </view>
-        <view class="form-value">
-          <text class="value-text">{{ formatDateDisplay(transactionDate) }}</text>
-          <text class="value-arrow">›</text>
-        </view>
         <!-- @ts-ignore -->
         <uni-datetime-picker
-          class="date-picker-hidden"
           type="date"
           v-model="transactionDate"
           :border="false"
@@ -209,14 +204,6 @@ const accounts = ref<any[]>([])
  */
 const formatMoney = (val: number) => {
   return val.toFixed(2)
-}
-
-/**
- * 格式化日期显示
- */
-const formatDateDisplay = (date: string) => {
-  if (!date) return '请选择'
-  return date
 }
 
 /**
@@ -830,17 +817,16 @@ onMounted(async () => {
   border: none;
 }
 
-/* 日期选择项 */
-.date-item {
-  position: relative;
+/* 日期选择项 - 内容靠右 */
+:deep(.uni-date-editor) {
+  flex: 1;
 }
 
-.date-picker-hidden {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  opacity: 0;
+:deep(.uni-date-x) {
+  justify-content: flex-end;
+}
+
+:deep(.uni-date__x-input) {
+  text-align: right;
 }
 </style>
