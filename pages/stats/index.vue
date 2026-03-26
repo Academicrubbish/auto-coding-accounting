@@ -37,13 +37,18 @@
       <view class="section-header">
         <text class="section-title">收支比例</text>
       </view>
-      <view class="ring-chart-container">
+      <view class="ring-chart-container" v-if="monthIncome > 0 || monthExpense > 0">
         <qiun-data-charts
           type="ring"
           :opts="ringOpts"
           :chartData="ringChartData"
           :canvas2d="true"
         />
+      </view>
+      <view class="chart-empty" v-else>
+        <text class="empty-icon">📊</text>
+        <text class="empty-text">暂无收支数据</text>
+        <text class="empty-hint">记一笔后查看统计</text>
       </view>
     </view>
 
@@ -75,13 +80,18 @@
           </view>
         </view>
       </view>
-      <view class="line-chart-container">
+      <view class="line-chart-container" v-if="dailyData.length > 0">
         <qiun-data-charts
           type="line"
           :opts="lineOpts"
           :chartData="lineChartData"
           :canvas2d="true"
         />
+      </view>
+      <view class="chart-empty" v-else>
+        <text class="empty-icon">📈</text>
+        <text class="empty-text">暂无趋势数据</text>
+        <text class="empty-hint">记一笔后查看趋势</text>
       </view>
     </view>
 
@@ -106,13 +116,18 @@
           </view>
         </view>
       </view>
-      <view class="pie-chart-container">
+      <view class="pie-chart-container" v-if="categoryData.length > 0">
         <qiun-data-charts
           type="pie"
           :opts="pieOpts"
           :chartData="pieChartData"
           :canvas2d="true"
         />
+      </view>
+      <view class="chart-empty" v-else>
+        <text class="empty-icon">🏷️</text>
+        <text class="empty-text">暂无{{ categoryType === 'expense' ? '支出' : '收入' }}分类数据</text>
+        <text class="empty-hint">记一笔后查看分类统计</text>
       </view>
       <!-- 分类列表 -->
       <view class="category-list" v-if="categoryData.length > 0">
@@ -689,6 +704,32 @@ watch(() => userStore.authStateVersion, () => {
 .pie-chart-container {
   width: 100%;
   height: 400rpx;
+}
+
+/* 图表空状态 */
+.chart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 0;
+}
+
+.chart-empty .empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 15rpx;
+  opacity: 0.5;
+}
+
+.chart-empty .empty-text {
+  font-size: 26rpx;
+  color: #999999;
+  margin-bottom: 5rpx;
+}
+
+.chart-empty .empty-hint {
+  font-size: 22rpx;
+  color: #cccccc;
 }
 
 /* 分类列表 */
