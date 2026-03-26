@@ -136,7 +136,17 @@
           <text class="picker-title">选择账户</text>
           <text class="picker-close" @tap="showAccountPicker = false">✕</text>
         </view>
-        <scroll-view class="account-list" scroll-y>
+        <!-- 空状态 -->
+        <view class="empty-state" v-if="accounts.length === 0">
+          <text class="empty-icon">💳</text>
+          <text class="empty-text">暂无账户</text>
+          <text class="empty-hint">请先创建一个账户</text>
+          <button class="empty-btn" @tap="goToCreateAccount">
+            <text>前往创建</text>
+          </button>
+        </view>
+        <!-- 账户列表 -->
+        <scroll-view class="account-list" scroll-y v-else>
           <view
             class="account-item"
             v-for="item in accounts"
@@ -159,6 +169,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '../../store/user'
 
 const userStore = useUserStore()
@@ -275,11 +286,13 @@ const loadAccounts = async () => {
 
     if (res.result.code === 0) {
       accounts.value = res.result.data || []
-      // 设置默认账户
-      const defaultAccount = accounts.value.find((a: any) => a.is_default)
-      if (defaultAccount) {
-        selectedAccountId.value = defaultAccount._id
-        selectedAccountName.value = defaultAccount.name
+      // 设置默认账户（仅在未选择时）
+      if (!selectedAccountId.value) {
+        const defaultAccount = accounts.value.find((a: any) => a.is_default)
+        if (defaultAccount) {
+          selectedAccountId.value = defaultAccount._id
+          selectedAccountName.value = defaultAccount.name
+        }
       }
     }
   } catch (error) {
@@ -304,6 +317,17 @@ const selectAccount = (item: any) => {
   selectedAccountId.value = item._id
   selectedAccountName.value = item.name
   showAccountPicker.value = false
+}
+
+/**
+ * 前往创建账户
+ */
+const goToCreateAccount = () => {
+  showAccountPicker.value = false
+  // @ts-ignore
+  uni.navigateTo({
+    url: '/pages/account/edit?from=record'
+  })
 }
 
 /**
@@ -442,6 +466,15 @@ const handleSubmit = async () => {
     isSubmitting.value = false
   }
 }
+
+/**
+ * 页面显示时刷新账户列表
+ */
+// @ts-ignore
+onShow(async () => {
+  // 刷新账户列表（从账户编辑页返回时）
+  await loadAccounts()
+})
 
 /**
  * 页面加载
@@ -757,6 +790,42 @@ onMounted(async () => {
 .account-check {
   font-size: 32rpx;
   color: #667eea;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 40rpx;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 30rpx;
+  color: #999999;
+  margin-bottom: 10rpx;
+}
+
+.empty-hint {
+  font-size: 26rpx;
+  color: #cccccc;
+  margin-bottom: 30rpx;
+}
+
+.empty-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  font-size: 28rpx;
+  padding: 16rpx 60rpx;
+  border-radius: 40rpx;
+  border: none;
 }
 
 /* 日期选择项 */
