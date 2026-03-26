@@ -64,18 +64,18 @@
           <text class="label-icon">📅</text>
           <text class="label-text">日期</text>
         </view>
+        <view class="form-value">
+          <text class="value-text">{{ formatDateDisplay(transactionDate) }}</text>
+          <text class="value-arrow">›</text>
+        </view>
         <!-- @ts-ignore -->
         <uni-datetime-picker
+          class="date-picker-hidden"
           type="date"
           v-model="transactionDate"
           :border="false"
           :clear-icon="false"
-        >
-          <view class="form-value">
-            <text class="value-text">{{ formatDateDisplay(transactionDate) }}</text>
-            <text class="value-arrow">›</text>
-          </view>
-        </uni-datetime-picker>
+        />
       </view>
 
       <!-- 备注输入 -->
@@ -587,6 +587,8 @@ onMounted(async () => {
   font-size: 80rpx;
   font-weight: bold;
   color: #333333;
+  height: 100rpx;
+  line-height: 100rpx;
 }
 
 /* 表单 */
@@ -833,15 +835,12 @@ onMounted(async () => {
   position: relative;
 }
 
-.date-item ::v-deep .uni-date-editor {
-  flex: 1;
-}
-
-.date-item ::v-deep .uni-date-x {
-  justify-content: flex-end;
-}
-
-.date-item ::v-deep .uni-date__x-input {
-  text-align: right;
+.date-picker-hidden {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
 }
 </style>
