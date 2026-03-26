@@ -787,7 +787,7 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80rpx 40rpx;
+  padding: 10rpx 40rpx 180rpx;
 }
 
 .empty-icon {
